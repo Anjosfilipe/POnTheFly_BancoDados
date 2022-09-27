@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Data.SqlClient;
 
 namespace POnTheFly
 {
@@ -66,7 +67,7 @@ namespace POnTheFly
             digito = digito + resto.ToString();
             return cpf.EndsWith(digito);
         }
-        public void CadastrarPassageiro(List<Passageiro> listaPassageiros)
+        public Passageiro CadastrarPassageiro()
         {
             string cpf;
             bool validacao = false;
@@ -91,19 +92,6 @@ namespace POnTheFly
                 {
                     Console.WriteLine("\nCPF inválido!\n");
                     validacao = true;
-                }
-
-                foreach (var passageiro in listaPassageiros)
-                {
-                    if (passageiro.Cpf == cpf)
-                    {
-                        if (true)
-                        {
-                            Console.WriteLine("\nCpf já se encontra cadastrado!");
-                            validacao = true;
-                            return;
-                        }
-                    }
                 }
 
             } while (validacao);
@@ -174,15 +162,15 @@ namespace POnTheFly
 
             Console.WriteLine("\nCadastro realizado com sucesso!");
 
-            listaPassageiros.Add(new Passageiro(nome, cpf, nascimento, sexo, DateTime.Now, DateTime.Now, Situacao));
+            return new Passageiro(nome, cpf, nascimento, sexo, DateTime.Now, DateTime.Now, Situacao);
         }
-        public void LocalizarPassageiro(List<Passageiro> listaPassageiros)
+        public void LocalizarPassageiro(BancoDados conn, SqlCommand cmd)
         {
             string op = "-1";
             string msg = "";
             string inputCpf;
             string[] options = new string[] { "1", "0" };
-            bool b;
+         
 
             while (op != "0")
             {
@@ -201,25 +189,52 @@ namespace POnTheFly
                 switch (op)
                 {
                     case "1":
-                        b = false;
+                        int contador = 0;
                         Console.Write("\nInforme o cpf do passageiro: ");
                         inputCpf = Console.ReadLine();
 
-                        foreach (Passageiro passageiro in listaPassageiros)
+                        cmd.CommandText = "SELECT * FROM  Passageiro WHERE CPF = @CPF";
+                        cmd.Parameters.Add(new SqlParameter("@CPF", inputCpf));
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
                         {
-                            if (passageiro.Cpf == inputCpf)
+                            if (reader.HasRows)
                             {
-                                Console.WriteLine("");
-                                Console.WriteLine(passageiro);
-                                Program.ReadString("\nVoltando ao menu principal!");
-                                b = true;                                                             
-                            };
+                                while (reader.Read())
+                                {
+                                    contador++;
+                                }
+                            }
                         }
-                        if (!b)
+                        if (contador == 0)
                         {
-                            Program.ReadString("\nPassageiro não encontrado!");
-                            Console.ReadKey();
+                            Console.WriteLine("\nInscrição informado não está cadastrado em nosso banco de dados!");
+                            Console.WriteLine("Pressione enter apra continuar!");
+
+                          
                         }
+
+                        cmd.CommandText = "SELECT * FROM  Passageiro WHERE CPF = @CPF";
+                        cmd.Parameters.Add(new SqlParameter("@CPF", inputCpf));
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            Console.Clear();
+                            while (reader.Read())
+                            {
+                                Console.WriteLine("Passageiro");
+                                Console.WriteLine("Nome:  {0}", reader.GetString(0));
+                                Console.WriteLine("CPF:  {0}", reader.GetString(1));
+                                Console.WriteLine("DataNascimento: {0}", reader.GetDateTime(2));
+                                Console.WriteLine("Sexo: {0}", reader.GetDateTime(3));
+                                Console.WriteLine("UltimaCompra: {0}", reader.GetDateTime(4));
+                                Console.WriteLine("DataCadatro: {0}", reader.GetString(5));
+                                Console.WriteLine("Situacao: {0}", reader.GetString(5));
+                            }
+                        }
+                        Console.WriteLine("\nPressione enter para continuar!");
+                        Console.ReadKey();
+                    
                         break;
 
                     case "0":
@@ -227,33 +242,11 @@ namespace POnTheFly
                 }
             }
         }
-        public void EditarPassageiro(List<Passageiro> listaPassageiros)
+        public void EditarPassageiro(BancoDados conn, SqlCommand cmd)
         {
-            string cpf;
             bool validacao = true;
             int opcao = 10;
-            char sexo;
             Passageiro passageiro = new();
-
-            Console.Clear();
-
-            Console.Write("Informe o cpf do passageiro: ");
-            cpf = Console.ReadLine();
-
-            foreach (var p in listaPassageiros)
-            {
-                if (p.Cpf == cpf)
-                {
-                    passageiro = p;
-                    validacao = true;
-                }
-            }
-
-            if (!validacao)
-            {
-                Console.WriteLine("\nCPF do cliente não localizado!");
-                return;
-            }
 
             do
             {
@@ -305,6 +298,12 @@ namespace POnTheFly
 
                     passageiro.Nome = nome;
 
+                    cmd.CommandText = "UPDATE  Aeronave SET Nome = @Nome WHERE CPF = @CPF";
+
+                    cmd.Parameters.Add(new SqlParameter("@CPF", passageiro.Cpf));
+                    cmd.Parameters.Add(new SqlParameter("@Nome", passageiro.Nome));
+
+                    cmd.ExecuteNonQuery();
                     Console.WriteLine("\nAlterado com sucesso!");
                 }
 
@@ -315,6 +314,12 @@ namespace POnTheFly
 
                     passageiro.DataNascimento = nascimento;
 
+                    cmd.CommandText = "UPDATE  Aeronave SET DataNascimento = @DataNascimento WHERE CPF = @CPF";
+
+                    cmd.Parameters.Add(new SqlParameter("@CPF", passageiro.Cpf));
+                    cmd.Parameters.Add(new SqlParameter("@DataNascimento", passageiro.DataNascimento));
+
+                    cmd.ExecuteNonQuery();
                     Console.WriteLine("\nAlterado com sucesso!");
                 }
 
@@ -354,18 +359,34 @@ namespace POnTheFly
 
                         if (opcao == 1)
                         {
-                            sexo = 'F';
+                            passageiro.Sexo = 'F';
+                            cmd.CommandText = "UPDATE  Aeronave SET Sexo = @Sexo WHERE CPF = @CPF";
+
+                            cmd.Parameters.Add(new SqlParameter("@CPF", passageiro.Cpf));
+                            cmd.Parameters.Add(new SqlParameter("@Sexo", passageiro.Sexo));
+                            cmd.ExecuteNonQuery();
+                            Console.WriteLine("\nAlterado com sucesso!");
                         }
                         else
                         {
                             if (opcao == 2)
                             {
-                                sexo = 'M';
+                                passageiro.Sexo = 'M';
+                                cmd.CommandText = "UPDATE  Aeronave SET Sexo = @Sexo WHERE CPF = @CPF";
+
+                                cmd.Parameters.Add(new SqlParameter("@CPF", passageiro.Cpf));
+                                cmd.Parameters.Add(new SqlParameter("@Sexo", passageiro.Sexo));
+                                cmd.ExecuteNonQuery();
                             }
 
                             else
                             {
-                                sexo = 'N';
+                                passageiro.Sexo = 'N';
+                                cmd.CommandText = "UPDATE  Aeronave SET Sexo = @Sexo WHERE CPF = @CPF";
+
+                                cmd.Parameters.Add(new SqlParameter("@CPF", passageiro.Cpf));
+                                cmd.Parameters.Add(new SqlParameter("@Sexo", passageiro.Sexo));
+                                cmd.ExecuteNonQuery();
                             }
                         }
                     }
@@ -406,6 +427,11 @@ namespace POnTheFly
                             if (opcao == 1)
                             {
                                 passageiro.Situacao = 'I';
+                                cmd.CommandText = "UPDATE  Aeronave SET Situacao = @Situacao WHERE CPF = @CPF";
+
+                                cmd.Parameters.Add(new SqlParameter("@CPF", passageiro.Cpf));
+                                cmd.Parameters.Add(new SqlParameter("@Situacao", passageiro.Situacao));
+                                cmd.ExecuteNonQuery();
                             }
 
                             else
@@ -449,6 +475,11 @@ namespace POnTheFly
                             if (opcao == 1)
                             {
                                 passageiro.Situacao = 'A';
+                                cmd.CommandText = "UPDATE  Aeronave SET Situacao = @Situacao WHERE CPF = @CPF";
+
+                                cmd.Parameters.Add(new SqlParameter("@CPF", passageiro.Cpf));
+                                cmd.Parameters.Add(new SqlParameter("@Situacao", passageiro.Situacao));
+                                cmd.ExecuteNonQuery();
                             }
 
                             else
@@ -460,32 +491,19 @@ namespace POnTheFly
                 }
             }
         }
-        public void ImprimirPassageiro(List<Passageiro> listaPassageiros)
+        public void ImprimirPassageiro(BancoDados conn, SqlCommand cmd)
         {
             Console.Clear();
 
-            if (listaPassageiros.Count == 0)
-            {
-                Console.WriteLine("\nLista vazia!");
-            }
-            else
-            {
-                Console.WriteLine("LISTA DE PASSAGEIROS CADASTRADOS: \n");
-
-                foreach (var passageiro in listaPassageiros)
-                {
-                    if (passageiro.Situacao == 'A')
-                    {
-                        Console.WriteLine(passageiro.ToString());
-                    }
-                }
-            }
+            Passageiro pass = new();
+            pass.LocalizarPassageiro(conn, cmd);
         }
-        public void AcessarPassageiro(List<Passageiro> listaPassageiros)
+        public void AcessarPassageiro(BancoDados conn, SqlCommand cmd)
         {
             int opcao = -1;
             bool condicaoDeParada = false;
             Passageiro passageiro = new();
+            cmd.Connection = conn.OpenConexao();
 
             do
             {
@@ -528,25 +546,32 @@ namespace POnTheFly
                 switch (opcao)
                 {
                     case 1:
-                        passageiro.CadastrarPassageiro(listaPassageiros);
+                        Passageiro pass = new();
+                        pass = passageiro.CadastrarPassageiro();
+
+                        string sql = $"Insert into Passageiro (CPF, NOME, DATA_NASCIMENTO, DATA_CADASTRO,SEXO,SITUACAO,ULTIMA_COMPRA) Values ('{pass.Cpf}' , " +
+                     $"'{pass.Nome}', '{pass.DataNascimento}', '{pass.DataCadastro}', '{pass.Sexo}', '{pass.Situacao}', '{pass.UltimaCompra}');";
+                        cmd.ExecuteNonQuery();
+                        Console.WriteLine("\t\t\t\t>>>>>>>> CADASTRO REALIZADO COM SUCESSO! <<<<<<<<<<<<");
                         Console.ReadKey();
+
                         break;
 
                     case 2:
-                        passageiro.EditarPassageiro(listaPassageiros);
+                        passageiro.EditarPassageiro(conn, cmd);
                         Console.ReadKey();
                         break;
 
                     case 3:
-                        passageiro.LocalizarPassageiro(listaPassageiros);
+                        passageiro.LocalizarPassageiro(conn,cmd);
                         break;
 
                     case 4:
-                        passageiro.ImprimirPassageiro(listaPassageiros);
+                        passageiro.ImprimirPassageiro(conn, cmd);
                         Console.ReadKey();
                         break;
                 }
-
+                cmd.Connection = conn.CloseConexao();
             } while (opcao != 9);
         }
         public string getData()

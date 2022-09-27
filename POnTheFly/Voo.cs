@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Data.SqlClient;
 
 namespace POnTheFly
 {
@@ -128,10 +129,7 @@ namespace POnTheFly
                     return new Voo(contador, destino, IdAeronave, dataVoo, DateTime.Now, 'A');
                 }
             }
-        } /// funcionando
-          /// 
-          /// Rodando perfeitamente. já embutido nele um controle de dados.
-          /// Necessita: Vincular o break correto para nossa aplicação e sincronizar a fonte de dados.  
+        }  
         public Voo LocalizarVoo(List<Voo> listaVoo)
         {
             int id = 0;
@@ -170,9 +168,7 @@ namespace POnTheFly
             }
 
             return v;
-        }/// funcionando
-         /// 
-         /// Rodando perfeitamente.
+        }
         public void ImprimirVoo(List<Voo> listaVoo)
         {
             Console.Clear();
@@ -186,9 +182,7 @@ namespace POnTheFly
                 Console.WriteLine(voo.ToString());
 
             }
-        }/// funcionando
-         /// 
-         /// Rodando perfeitamente.
+        }
         public void EditarVoo(List<Voo> listaVoo)
         {
             Voo v = new Voo();
@@ -242,140 +236,13 @@ namespace POnTheFly
                 }
             }
 
-        }/// funcionando
-         /// 
-         /// Rodando perfeitamente. <summary>
-         /// funcionando
-        public void Imprimindo_Arquivo()
-        {
-            string line;
-            try
-            {
-                StreamReader sr = new StreamReader("c:\\Users\\Filipe Anjos\\Documents\\ATIVIDADES_ESTAGIO\\PON_THE_FLY\\Voo.dat");//Instancia um Objeto StreamReader (Classe de Manipulação de Leitura de Arquivos)
-                line = sr.ReadLine(); //Faz a Leitura de uma linha do arquivo e atribui a string line
-                while (line != null)// Laço de Repetição para fazer a leitura de linhas do arquivo até o EOF (End Of File - Fim do Arquivo)
-                {
-                    Console.WriteLine(line);//Imprime o retorno do arquivo no Console
-                    line = sr.ReadLine(); //Faz a Leitura de linha do arquivo e atribui a string line
-                }
-                sr.Close();//Fecha o Arquivo
-                Console.WriteLine("Fim da Leitura do Arquivo");
-                Console.ReadLine();
-            }
-            catch (Exception e) // Tratamento de erro na abertura do arquivo
-            {
-                Console.WriteLine("Exception: " + e.Message);
-            }
-
         }
-        public bool Ler_Arquivo()
-        {
-            string line;
-            try
-            {
-                StreamReader sr = new StreamReader(@"c:\PONTHEFLY\POnTheFly\Voo.dat");//Instancia um Objeto StreamReader (Classe de Manipulação de Leitura de Arquivos)
-                line = sr.ReadLine(); //Faz a Leitura de uma linha do arquivo e atribui a string line
-                while (line != null)// Laço de Repetição para fazer a leitura de linhas do arquivo até o EOF (End Of File - Fim do Arquivo)
-                {
-
-                    line = sr.ReadLine(); //Faz a Leitura de linha do arquivo e atribui a string line
-                    return true;
-
-                }
-                sr.Close();//Fecha o Arquivo
-                Console.WriteLine("FIM DA LEITURA");
-                Console.ReadKey();
-            }
-            catch // Tratamento de erro na abertura do arquivo
-            {
-                Console.WriteLine("\nArquivo inexistente! - Gerar arquivo");
-                return false;
-            }
-            if (line != null)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        public void GravarArquivoVoo(List<Voo> listaVoo)
-        {
-            //bool existe = Ler_Arquivo();
-            //if (existe == false)
-
-            Console.WriteLine("\nIniciando a Gravação de Dados...");
-            try
-            {
-                StreamWriter sw = new StreamWriter(@"C:\Users\5BY5\source\repos\PROJETO-ON-THE-FLY\POnTheFly\Voo.dat");  //Instancia um Objeto StreamWriter (Classe de Manipulação de Arquivos)
-                                                                                        //sw.WriteLine("Treinamento de C#");  //Escreve uma linha no Arquivo
-                                                                                        //sw.WriteLine("maria;araraquara;190;contato;"); //Exemplo de escrita - formato da escrita será de acordo com a necessidade do projeto
-                foreach (Voo i in listaVoo)
-                {
-                    sw.WriteLine("V" + i.IDVoo.ToString("D4") + i.Destino + i.InscricaoAeronave + i.DataVoo.ToString("ddMMyyyy" + "HHmm") + i.DataCadastro.ToString("ddMMyyyy" + "HHmm") + i.Situacao);
-                }
-                sw.Close();  // Comando para Fechar o Arquivo
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Exception: " + e.Message);
-            }
-            finally
-            {
-                Console.WriteLine("Executando o Bloco de Comandos.");
-            }
-            Console.WriteLine("FIM DA GRAVAÇÃO");
-
-
-
-        }
-        public void CarregarArquivoVoo(List<Voo> listaVoo)
-        {
-            bool validacao = true;
-            try
-            {
-                string line;
-                StreamReader sr = new StreamReader(@"C:\Users\5BY5\source\repos\PROJETO-ON-THE-FLY\POnTheFly\Voo.dat");//Instancia um Objeto StreamReader (Classe de Manipulação de Leitura de Arquivos)
-                line = sr.ReadLine(); //Faz a Leitura de uma linha do arquivo e atribui a string line
-                while (line != null)
-                {
-                    Voo v = new();
-                    string dataVoo = line.Substring(13, 2) + "/" + line.Substring(15, 2) + "/" + line.Substring(17, 4) + ' ' + line.Substring(21, 2) + ':' + line.Substring(23, 2);
-                    string dataCadastro = line.Substring(25, 2) + "/" + line.Substring(27, 2) + "/" + line.Substring(29, 4) + ' ' + line.Substring(33, 2) + ':' + line.Substring(35, 2);
-                    v.IDVoo = int.Parse(line.Substring(1, 4));
-                    v.Destino = line.Substring(5, 3);
-                    v.InscricaoAeronave = line.Substring(8, 5);
-                    v.DataVoo = DateTime.Parse(dataVoo);
-                    v.DataCadastro = DateTime.Parse(dataCadastro);
-                    v.Situacao = char.Parse(line.Substring(37, 1));
-                    listaVoo.Add(v);
-                    line = sr.ReadLine();
-                    validacao = true;
-                }
-            }
-
-            catch (Exception e)
-            {
-                Console.WriteLine("Mensagem: ", e.Message);
-                validacao = false;
-            }
-
-            if (validacao)
-            {
-                Console.WriteLine("\nArquivo carregado com sucesso!");
-            }
-
-            else
-            {
-                Console.WriteLine("\nFalha no arquivo!");
-            }
-        }
-        public void AcessarVoo(List<Voo> listaVoo, List<Aeronave> listaAeronaves, List<string> listIata)
+        public void AcessarVoo(BancoDados conn, SqlCommand cmd)
         {
             int opcao = 0;
             bool condicaoDeParada = false;
             Voo voo = new();
+            cmd.Connection = conn.OpenConexao();
 
             do
             {
@@ -415,42 +282,43 @@ namespace POnTheFly
                     }
                 }
 
-                switch (opcao)
-                {
-                    case 1:
-                        Voo voo1 = new Voo();
-                        voo1 = voo.CadastrarVoo(listaVoo, listaAeronaves, listIata);
+                //switch (opcao)
+                //{
+                //    case 1:
+                //        Voo voo1 = new Voo();
+                //        voo1 = voo.CadastrarVoo(listaVoo, listaAeronaves, listIata);
 
-                        if (voo1 == null)
-                        {
-                        }
+                //        if (voo1 == null)
+                //        {
+                //        }
 
-                        else
-                        {
-                            listaVoo.Add(voo1);
-                        }
-                        Console.ReadKey();
-                        break;
+                //        else
+                //        {
+                //            listaVoo.Add(voo1);
+                //        }
+                //        Console.ReadKey();
+                //        break;
 
-                    case 2:
-                        voo.EditarVoo(listaVoo);
-                        Console.ReadKey();
-                        break;
+                //    case 2:
+                //        voo.EditarVoo(listaVoo);
+                //        Console.ReadKey();
+                //        break;
 
-                    case 3:
-                        voo.LocalizarVoo(listaVoo);
-                        Console.ReadKey();
-                        break;
+                //    case 3:
+                //        voo.LocalizarVoo(listaVoo);
+                //        Console.ReadKey();
+                //        break;
 
-                    case 4:
-                        voo.ImprimirVoo(listaVoo);
-                        Console.ReadKey();
-                        break;
+                //    case 4:
+                //        voo.ImprimirVoo(listaVoo);
+                //        Console.ReadKey();
+                //        break;
 
-                    case 9:
-                        Console.WriteLine("Até");
-                        break;
-                }
+                //    case 9:
+                //        cmd.Connection = conn.CloseConexao();
+                //        Console.WriteLine("Até");
+                //        break;
+                //}
 
             } while (opcao != 9);
         }

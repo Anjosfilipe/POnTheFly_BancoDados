@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Data.SqlClient;
 
 namespace POnTheFly
 {
@@ -14,7 +15,7 @@ namespace POnTheFly
         public DateTime DataAbertura { get; set; }
         public DateTime UltimoVoo { get; set; }
         public DateTime DataCadastro { get; set; }
-        public char Situacao { get; set; }        
+        public char Situacao { get; set; }
 
         public CompanhiaAerea()
         {
@@ -28,7 +29,8 @@ namespace POnTheFly
             DataCadastro = dataCadastro;
             Situacao = situacao;
         }
-        public CompanhiaAerea CadastrarCompanhia(List<CompanhiaAerea> companhias)
+
+        public CompanhiaAerea CadastrarCompanhia()
         {
             bool condicaoDeSaida = false;
             string numeroCnpj = "1";
@@ -41,38 +43,11 @@ namespace POnTheFly
             Console.Write("Informe a Razão social: ");
             string razaoSocial = Console.ReadLine().ToUpper();
 
-            do
-            {
-                Console.Write("Informe o número do CNPJ: ");
 
-                numeroCnpj = Console.ReadLine();
-                condicaoDeSaida = false;
+            Console.Write("Informe o número do CNPJ: ");
 
-                if (!ValidarCnpj(numeroCnpj))
-                {
-                    Console.WriteLine("\nCNPJ digitado é inválido!\n");
-                    condicaoDeSaida = true;
-                }
-                else
-                {
-                    if (companhias.Count == 0)
-                    {
-                    }
-
-                    else
-                    {
-                        foreach (var companhia in companhias)
-                        {
-                            if (companhia.Cnpj == numeroCnpj)
-                            {
-                                Console.WriteLine($"\nHá companhia {companhia.RazaoSocial} - Situação: {companhia.Situacao} já possue este nome!\n");
-                                condicaoDeSaida = true;
-                            }
-                        }
-                    }
-                }
-
-            } while (condicaoDeSaida);
+            numeroCnpj = Console.ReadLine();
+            condicaoDeSaida = false;
 
             do
             {
@@ -102,54 +77,65 @@ namespace POnTheFly
 
             return new CompanhiaAerea(razaoSocial, numeroCnpj, dataAbertura, DateTime.Now, DateTime.Now, 'A');
         }
-        public CompanhiaAerea LocalizarCompanhia(List<CompanhiaAerea> companhias)
+        public CompanhiaAerea LocalizarCompanhia(BancoDados conn, SqlCommand cmd)
         {
-            string cnpj;
-            bool validacao;
-            CompanhiaAerea companhia = new();
 
-            if (Vazia(companhias))
+            CompanhiaAerea comp = new();
+            int contador = 0;
+            Console.Clear();
+            Console.WriteLine("Olá,");
+            Console.Write("\nInforme qual o CNPJ da companhia que deseja localizar: ");
+            string cnpjl = Console.ReadLine();
+
+            cmd = new();
+            cmd.Connection = conn.OpenConexao();
+
+            cmd.CommandText = "SELECT * FROM  Compania_Aerea WHERE CNPJ = @CNPJ0";
+            cmd.Parameters.Add(new SqlParameter("@CNPJ0", cnpjl));
+            using (SqlDataReader reader = cmd.ExecuteReader())
             {
-                Console.WriteLine("Lista de companhias vazia!");
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        contador++;
+                    }
+                }
+            }
+            if (contador == 0)
+            {
+                Console.WriteLine("\nCNPJ informado não está cadastrado em nosso banco de dados!");
+                Console.WriteLine("Pressione enter apra continuar!");
+
                 return null;
             }
 
-            else
+            cmd.CommandText = "SELECT * FROM  Compania_Aerea WHERE CNPJ = @CNPJ";
+            cmd.Parameters.Add(new SqlParameter("@CNPJ", cnpjl));
+
+            using (SqlDataReader reader = cmd.ExecuteReader())
             {
                 Console.Clear();
-
-                Console.WriteLine("Olá,");
-
-                Console.Write("\nInforme qual o CNPJ da companhia que deseja localizar: ");
-                cnpj = Console.ReadLine();
-                validacao = false;
-
-                foreach (var c in companhias)
+                while (reader.Read())
                 {
-                    if (c.Cnpj == cnpj)
-                    {
-                        Console.WriteLine();
-                        Console.WriteLine(c.ToString());
-                        validacao = true;
-                        companhia = c;
-                        return c;
-                    }
-                }
-
-                if (!validacao)
-                {
-                    Console.WriteLine("\nCNPJ informado não está cadastrado em nosso banco de dados!");
-                    Console.WriteLine("Pressione enter apra continuar!");
-                    return null;
-                }
-
-                else
-                {
-                    return companhia;
+                    Console.WriteLine("COMPANHIA");
+                    Console.WriteLine("Nome: {0}", reader.GetString(0));
+                    Console.WriteLine("CNPJ: {0}", reader.GetString(1));
+                    Console.WriteLine("Data Abertura:  {0}", reader.GetString(2));
+                    Console.WriteLine("Último Voo: {0}", reader.GetString(3));
+                    Console.WriteLine("Data Cadastro: {0}", reader.GetString(4));
+                    Console.WriteLine("Situação: {0}", reader.GetString(5));
+                    comp.Cnpj = (reader.GetString(1));
                 }
             }
+
+
+            Console.WriteLine("\nPressione enter para continuar!");
+            Console.ReadKey();
+            return comp;
+
         }
-        public void EditarCompanhia(List<CompanhiaAerea> companhias)
+        public void EditarCompanhia(BancoDados conn, SqlCommand cmd)
         {
             int opcao = 0;
             bool condicaoDeParada = false;
@@ -158,171 +144,154 @@ namespace POnTheFly
 
             CompanhiaAerea companhia = new CompanhiaAerea();
 
-            if (Vazia(companhias))
+            CompanhiaAerea comp = companhia.LocalizarCompanhia(conn, cmd);
+
+
+            do
             {
-                Console.WriteLine("\nNão é possivel editar uma lista vázia!");
+                Console.Clear();
+
+                Console.WriteLine("Informe qual dado deseja editar: \n");
+                Console.Write("1 - Razão social\n2 - Data de abertura do CNPJ\n3 - Situação \n\n");
+                Console.Write("Opção: ");
+
+                try
+                {
+                    opcao = int.Parse(Console.ReadLine());
+                    condicaoDeParada = false;
+                }
+
+                catch (Exception)
+                {
+                    Console.WriteLine("\nParametro informado é inválido!");
+                    Console.WriteLine("Pressione enter para continuar!");
+                    Console.ReadKey();
+                    condicaoDeParada = true;
+                }
+
+                if (opcao < 1 || opcao > 3)
+                {
+                    if (!condicaoDeParada)
+                    {
+                        Console.WriteLine("\nOpção informada é inválida!");
+                        Console.WriteLine("Pressione enter para continuar!");
+                        Console.ReadKey();
+                        condicaoDeParada = true;
+                    }
+                }
+
+            } while (condicaoDeParada);
+
+            if (opcao == 1)
+            {
+                Console.Write("\nInforme a nova Razão Social: ");
+                razaoSocial = Console.ReadLine();
+
+                companhia.RazaoSocial = razaoSocial;
+
+                cmd.CommandText = "UPDATE  Compania_Aerea SET RazaoSocial = @razaoSocial WHERE CNPJ = @CNPJ1";
+
+                cmd.Parameters.Add(new SqlParameter("@CNPJ1", comp.Cnpj));
+                cmd.Parameters.Add(new SqlParameter("@razaosocial", companhia.RazaoSocial));
+
+                cmd.ExecuteNonQuery();
+                Console.WriteLine("\nAlterado com sucesso!");
             }
 
             else
             {
-                companhia = LocalizarCompanhia(companhias);
-
-                if (companhia == null)
-                {
-                }
-
-                else
+                if (opcao == 2)
                 {
                     do
                     {
-                        Console.Clear();
-
-                        Console.WriteLine("Informe qual dado deseja editar: \n");
-                        Console.Write("1 - Razão social\n2 - Data de abertura do CNPJ\n3 - Situação \n\n");
-                        Console.Write("Opção: ");
+                        Console.Write("\nInforme a nova Data de abertura do CNPJ (dd/mm/aaaa): ");
 
                         try
                         {
-                            opcao = int.Parse(Console.ReadLine());
+                            dataAbertura = DateTime.Parse(Console.ReadLine());
                             condicaoDeParada = false;
                         }
 
                         catch (Exception)
                         {
-                            Console.WriteLine("\nParametro informado é inválido!");
-                            Console.WriteLine("Pressione enter para continuar!");
-                            Console.ReadKey();
+                            Console.WriteLine("\nData informado deve seguir o formato informado: (dd/mm/aa)\n");
                             condicaoDeParada = true;
-                        }
-
-                        if (opcao < 1 || opcao > 3)
-                        {
-                            if (!condicaoDeParada)
-                            {
-                                Console.WriteLine("\nOpção informada é inválida!");
-                                Console.WriteLine("Pressione enter para continuar!");
-                                Console.ReadKey();
-                                condicaoDeParada = true;
-                            }
                         }
 
                     } while (condicaoDeParada);
 
-                    if (opcao == 1)
+                    companhia.DataAbertura = dataAbertura;
+
+                    cmd.CommandText = "UPDATE  Compania_Aerea SET DataAbertura = @DataAbertura WHERE CNPJ = @CNPJ2";
+
+                    cmd.Parameters.Add(new SqlParameter("@CNPJ2", comp.Cnpj));
+                    cmd.Parameters.Add(new SqlParameter("@DataAbertura", companhia.DataAbertura));
+
+                    cmd.ExecuteNonQuery();
+                    Console.WriteLine("\nAlterado com sucesso!");
+                }
+
+                else
+                {
+                    if (companhia.Situacao == 'A')
                     {
-                        Console.Write("\nInforme a nova Razão Social: ");
-                        razaoSocial = Console.ReadLine();
+                        Console.WriteLine("\nDeseja alterar a situação desta Aeronave para Inativa?");
+                        Console.Write("\n1 - Sim\n2 - Não\n\nOpção: ");
+                        opcao = int.Parse(Console.ReadLine());
 
-                        companhia.RazaoSocial = razaoSocial;
-
-                        Console.WriteLine("\nAlterado com sucesso!");
-                    }
-
-                    else
-                    {
-                        if (opcao == 2)
+                        if (opcao == 1)
                         {
-                            do
-                            {
-                                Console.Write("\nInforme a nova Data de abertura do CNPJ (dd/mm/aaaa): ");
+                            companhia.Situacao = 'I';
 
-                                try
-                                {
-                                    dataAbertura = DateTime.Parse(Console.ReadLine());
-                                    condicaoDeParada = false;
-                                }
+                            cmd.CommandText = "UPDATE  Compania_Aerea SET Situacao = @Situacao WHERE CNPJ = @CNPJ3";
 
-                                catch (Exception)
-                                {
-                                    Console.WriteLine("\nData informado deve seguir o formato informado: (dd/mm/aa)\n");
-                                    condicaoDeParada = true;
-                                }
+                            cmd.Parameters.Add(new SqlParameter("@CNPJ3", comp.Cnpj));
+                            cmd.Parameters.Add(new SqlParameter("@Situacao", companhia.Situacao));
 
-                            } while (condicaoDeParada);
-
-                            companhia.DataAbertura = dataAbertura;
+                            cmd.ExecuteNonQuery();
 
                             Console.WriteLine("\nAlterado com sucesso!");
                         }
 
                         else
                         {
-                            if (companhia.Situacao == 'A')
-                            {
-                                Console.WriteLine("\nDeseja alterar a situação desta Aeronave para Inativa?");
-                                Console.Write("\n1 - Sim\n2 - Não\n\nOpção: ");
-                                opcao = int.Parse(Console.ReadLine());
+                            Console.WriteLine("\nAté logo!");
+                        }
+                    }
 
-                                if (opcao == 1)
-                                {
-                                    Console.WriteLine("\nAlterado com sucesso!");
-                                    companhia.Situacao = 'I';
-                                }
+                    else
+                    {
+                        Console.WriteLine("\nDeseja alterar a situação desta Aeronave para Ativa?");
+                        Console.Write("\n1 - Sim\n2 - Não\n\nOpção: ");
+                        opcao = int.Parse(Console.ReadLine());
 
-                                else
-                                {
-                                    Console.WriteLine("\nAté logo!");
-                                }
-                            }
+                        if (opcao == 1)
+                        {
+                            companhia.Situacao = 'A';
 
-                            else
-                            {
-                                Console.WriteLine("\nDeseja alterar a situação desta Aeronave para Ativa?");
-                                Console.Write("\n1 - Sim\n2 - Não\n\nOpção: ");
-                                opcao = int.Parse(Console.ReadLine());
+                            cmd.CommandText = "UPDATE  Compania_Aerea SET Situacao = @Situacao WHERE CNPJ = @CNPJ4";
 
-                                if (opcao == 1)
-                                {
-                                    Console.WriteLine("\nAlterado com sucesso!");
-                                    companhia.Situacao = 'A';
-                                }
+                            cmd.Parameters.Add(new SqlParameter("@CNPJ4", comp.Cnpj));
+                            cmd.Parameters.Add(new SqlParameter("@Situacao", companhia.Situacao));
 
-                                else
-                                {
-                                    Console.WriteLine("\nAté logo!");
-                                }
-                            }
+                            cmd.ExecuteNonQuery();
+                            Console.WriteLine("\nAlterado com sucesso!");
+                        }
+
+                        else
+                        {
+                            Console.WriteLine("\nAté logo!");
                         }
                     }
                 }
             }
+
         }
-        public void ImprimirCompanhia(List<CompanhiaAerea> companhias)
+        public void ImprimirCompanhia(BancoDados conn, SqlCommand cmd)
         {
 
-            if (Vazia(companhias))
-            {
-                Console.WriteLine("\nLista de companhias vazia!");
-            }
-
-            else
-            {
-                Console.Clear();
-
-                Console.WriteLine("Companhias Aerea Cadastradas: \n");
-
-
-
-                foreach (var companhia in companhias)
-                {
-                    if (companhia.Situacao == 'A')
-                    {
-                        Console.WriteLine(companhia.ToString());
-                    }
-                }
-            }
-        }
-        public bool Vazia(List<CompanhiaAerea> companhias)
-        {
-            if (companhias.Count == 0)
-            {
-                return true;
-            }
-
-            else
-            {
-                return false;
-            }
+            CompanhiaAerea comp = new CompanhiaAerea();
+            comp.LocalizarCompanhia(conn, cmd);
         }
         public bool ValidarCnpj(string cnpj)
         {
@@ -426,12 +395,12 @@ namespace POnTheFly
             return cnpj.EndsWith(digito);
 
         }
-        public void AcessarCompanhia(List<CompanhiaAerea> companhias)
+        public void AcessarCompanhia(BancoDados conn, SqlCommand cmd)
         {
             int opcao = 0;
             bool condicaoDeParada = false;
             CompanhiaAerea companhia = new();
-
+            cmd.Connection = conn.OpenConexao();
             do
             {
                 Console.Clear();
@@ -473,26 +442,54 @@ namespace POnTheFly
                 switch (opcao)
                 {
                     case 1:
-                        companhias.Add(companhia.CadastrarCompanhia(companhias));
+                        CompanhiaAerea comp = companhia.CadastrarCompanhia();
+                        cmd.CommandText = "INSERT INTO Compania_Aerea (RazaoSocial, CNPJ, DataAbertura, UltimoVoo, DataCadatro, Situacao) VALUES (@RazaoSocial, @CNPJ, @DataAbertura, @UltimoVoo, @DataCadatro, @Situacao);";
+
+                        SqlParameter razaosocial = new SqlParameter("@RazaoSocial", System.Data.SqlDbType.VarChar, 50);
+                        SqlParameter cnpj = new SqlParameter("@CNPJ", System.Data.SqlDbType.VarChar, 11);
+                        SqlParameter dataabertura = new SqlParameter("@DataAbertura", System.Data.SqlDbType.VarChar, 10);
+                        SqlParameter ultimovoo = new SqlParameter("@UltimoVoo", System.Data.SqlDbType.VarChar, 10);
+                        SqlParameter datacadastro = new SqlParameter("@DataCadatro", System.Data.SqlDbType.VarChar, 10);
+                        SqlParameter situacao = new SqlParameter("@Situacao", System.Data.SqlDbType.Char, 1);
+
+                        razaosocial.Value = comp.RazaoSocial;
+                        cnpj.Value = comp.Cnpj;
+                        dataabertura.Value = comp.DataAbertura;
+                        ultimovoo.Value = comp.UltimoVoo;
+                        datacadastro.Value = comp.UltimoVoo;
+                        situacao.Value = comp.Situacao;
+
+                        cmd.Parameters.Add(razaosocial);
+                        cmd.Parameters.Add(cnpj);
+                        cmd.Parameters.Add(dataabertura);
+                        cmd.Parameters.Add(ultimovoo);
+                        cmd.Parameters.Add(datacadastro);
+                        cmd.Parameters.Add(situacao);
+
+                        cmd.ExecuteNonQuery();
+                        Console.WriteLine("\t\t\t\t>>>>>>>> CADASTRO REALIZADO COM SUCESSO! <<<<<<<<<<<<");
                         Console.ReadKey();
+
                         break;
 
                     case 2:
-                        companhia.EditarCompanhia(companhias);
+                        companhia.EditarCompanhia(conn, cmd);
                         Console.ReadKey();
                         break;
 
                     case 3:
-                        companhia.LocalizarCompanhia(companhias);
+                        Console.WriteLine("\t\t\t\t>>>>>>>> COMPANIA LOCALIZADA COM SUCESSO! <<<<<<<<<<<<");
+                        CompanhiaAerea comp1 = companhia.LocalizarCompanhia(conn, cmd);
                         Console.ReadKey();
                         break;
 
                     case 4:
-                        companhia.ImprimirCompanhia(companhias);
+                        companhia.ImprimirCompanhia(conn, cmd);
                         Console.ReadKey();
                         break;
 
                     case 9:
+                        cmd.Connection = conn.CloseConexao();
                         Console.WriteLine("Até");
                         break;
                 }
