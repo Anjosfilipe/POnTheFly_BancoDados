@@ -194,7 +194,7 @@ namespace POnTheFly
                     Console.WriteLine("Situacao:  {0}", reader.GetString(4));
                     Console.WriteLine("CNPJ:  {0}", reader.GetString(5));
                     aeronave.Inscricao = reader.GetString(0);
-                    
+                    aeronave.Capacidade = reader.GetInt32(1).ToString();
                 }
             }
             Console.WriteLine("\nPressione enter para continuar!");

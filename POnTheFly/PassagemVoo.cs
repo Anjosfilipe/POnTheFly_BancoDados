@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Globalization;
+using System.Data.SqlClient;
 
 namespace POnTheFly
 {
@@ -29,46 +30,22 @@ namespace POnTheFly
             Situacao = situacao;
         }
 
-        public void CadastrarPassagem(List<Aeronave> listaAeronaves, List<Voo> listaVoo, List<PassagemVoo> listaPassagens)
+        public void CadastrarPassagem(BancoDados conn, SqlCommand cmd)
         {
-            Aeronave aeronave = new();
+            Aeronave ar = new();
             Voo voo = new();
+
             bool validacao = false;
             double valor;
-            int idPassagem = 1;                      
+            int idPassagem = 1;
+            
 
             Console.Clear();
 
-            Console.Write("Informe o id do voo: ");
-            int idVoo = int.Parse(Console.ReadLine());
+            Aeronave aeronave = ar.Localizar(conn,cmd);
+            Voo voo2 = voo.LocalizarVoo(conn,cmd);
 
-            Console.Write("informe a inscrição da Aeronave: ");
-            string inscricao = Console.ReadLine().ToUpper();
-
-            foreach (var v in listaVoo)
-            {
-                if (v.IDVoo == idVoo)
-                {
-                    validacao = true;
-                    voo = v;
-                    break;
-                }
-            }
-
-            foreach (var aero in listaAeronaves)
-            {
-                if (aero.Inscricao == inscricao)
-                {
-                    aeronave = aero;
-                    break;
-                }
-            }
-
-            if (!validacao)
-            {
-                Console.WriteLine("\nID do voo ou inscrição da aeronave incorretos!");
-                return;
-            }
+            
 
             do
             {
@@ -84,43 +61,30 @@ namespace POnTheFly
 
             } while (validacao);
 
-            string stringIdVoo = "" + idVoo;
-            string stringIdPassagem = "" + idPassagem;
+            string stringIdVoo = "" + voo2.IDVoo;
+            string stringIdPassagem = "PA" + idPassagem;
             string stringValor = "" + valor;
 
             for (int i = 0; i < int.Parse(aeronave.Capacidade); i++)
             {
-                listaPassagens.Add(
-                    new PassagemVoo(
-                        stringIdPassagem,
-                        stringIdVoo,
-                        DateTime.Now,
-                        stringValor,
-                        'L'
-                    ));;
-                //aeronave.AcentosOcupado = "" + idPassagem;
                 stringIdPassagem = "" + idPassagem++;
+
+                cmd.CommandText = $"Insert into PassagemVoo (ID_PassagemVoo, ID_Voo, DataUltima_Operacao, Valor, Situacao ) Values ('{stringIdPassagem}', " +
+                        $"'{stringIdVoo}', '{DateTime.Now.ToShortDateString()}', '{stringValor}', '{'l'}');";
+
+                cmd.ExecuteNonQuery();
+                
+              
             }
-
-            //if (int.Parse(aeronave.Capacidade) == int.Parse(aeronave.AcentosOcupado))
-            //{
-            //    Console.WriteLine("\nCadastro de passagens com sucesso!");
-            //}
-
-            //else
-            //{
-            //    Console.WriteLine("Falha ao criar passagens!");
-            //}
-        }/// funcionando
-         /// 
-         /// Rodando perfeitamente.
-        public void EditarPassagem(List<Voo> listaVoo, List<PassagemVoo> listaPassagem)
+                Console.WriteLine("\nCadastro de passagens com sucesso!");
+        }
+        public void EditarPassagem(BancoDados conn, SqlCommand cmd)
         {
             PassagemVoo p = new();
-
+           
             Console.Clear();
 
-            p.LocalizarPassagem(listaVoo, listaPassagem);
+            PassagemVoo p1 =  p.LocalizarPassagem(conn,cmd);
 
             Console.WriteLine("Informe qual dado deseja alterar: ");
             Console.WriteLine("\n1 - Valor");
@@ -144,7 +108,15 @@ namespace POnTheFly
                     else
                     {
                         p.Valor = "" + valor;
-                        Console.WriteLine("\n >> Pasagem editada com sucesso <<");
+
+                        cmd.CommandText = "UPDATE  PassagemVoo SET Valor = @valor WHERE ID_PassagemVoo = @ID_PassagemVoo AND ID_Voo = @ID_Voo";
+
+                        cmd.Parameters.Add(new SqlParameter("@ID_PassagemVoo", p1.IdPassagem));
+                        cmd.Parameters.Add(new SqlParameter("@ID_Voo",p1.IdVoo ));
+                        cmd.Parameters.Add(new SqlParameter("@valor", valor));
+
+                        cmd.ExecuteNonQuery();
+                        Console.WriteLine("\n >> Passagem editada com sucesso <<");
                     }
                     break;
 
@@ -152,13 +124,22 @@ namespace POnTheFly
                     Console.WriteLine("\nInforme a Situação: ");
                     char situacao = char.Parse(Console.ReadLine());
                     p.Situacao = situacao;
-                    Console.WriteLine("\n >> Pasagem editada com sucesso <<");
+
+                    cmd.CommandText = "UPDATE  PassagemVoo SET Situacao = @situacao WHERE ID_PassagemVoo = @ID_PassagemVoo1 AND ID_Voo = @ID_Voo1";
+
+                    cmd.Parameters.Add(new SqlParameter("@ID_PassagemVoo1", p1.IdPassagem));
+                    cmd.Parameters.Add(new SqlParameter("@ID_Voo1", p1.IdVoo));
+                    cmd.Parameters.Add(new SqlParameter("@situacao", p.Situacao));
+
+                    cmd.ExecuteNonQuery();
+
+                    Console.WriteLine("\n >> Passagem editada com sucesso <<");
                     break;
             }
         }/// funcionando
-        public PassagemVoo LocalizarPassagem(List<Voo> listaVoo, List<PassagemVoo> listaPassagem)
+        public PassagemVoo LocalizarPassagem(BancoDados conn, SqlCommand cmd)
         {
-            bool achei = false;
+            int contador = 0;
 
             PassagemVoo p = new();
 
@@ -170,166 +151,66 @@ namespace POnTheFly
             Console.Write("Informe o id da passagem: ");
             string idPassagem = Console.ReadLine();
 
-            foreach (Voo i in listaVoo)
+            cmd = new();
+            cmd.Connection = conn.OpenConexao();
+
+            cmd.CommandText = "SELECT * FROM PassagemVoo WHERE ID_PassagemVoo = @ID_PassagemVoo";
+            cmd.Parameters.Add(new SqlParameter("@ID_PassagemVoo", idPassagem));
+            using (SqlDataReader reader = cmd.ExecuteReader())
             {
-                if (i.IDVoo == idVoo)
+                if (reader.HasRows)
                 {
-                    foreach (var pv in listaPassagem)
+                    while (reader.Read())
                     {
-                        if (pv.IdPassagem == idPassagem)
-                        {
-                            achei = true;
-                            p = pv;
-                            Console.WriteLine("\n>>>>>>> PASSAGEM LOCALIZADA <<<<<<");
-                            Console.WriteLine(p.ToString());
-                            return p;
-                        }
+                        contador++;
                     }
                 }
             }
-
-            if (achei)
+            if (contador == 0)
             {
-                Console.WriteLine("Passagem não encontrada!");
+                Console.WriteLine("\nPassagem informada não está cadastrada em nosso banco de dados!");
+                Console.WriteLine("Pressione enter apra continuar!");
+
+                return null;
             }
+
+            cmd.CommandText = "SELECT * FROM PassagemVoo WHERE ID_PassagemVoo = @ID_PassagemVoo1 AND ID_Voo = @Idvoo ";
+            cmd.Parameters.Add(new SqlParameter("@ID_PassagemVoo1", idPassagem));
+            cmd.Parameters.Add(new SqlParameter("@Idvoo", idVoo));
+
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                Console.Clear();
+                while (reader.Read())
+                {
+                    Console.WriteLine("Passagem Voo");
+                    Console.WriteLine("ID_PassagemVoo: PA{0}", reader.GetString(0));
+                    Console.WriteLine("ID_Voo: V{0}", reader.GetString(1));
+                    Console.WriteLine("DataUltima_Operacao:  {0}", reader.GetString(2));
+                    Console.WriteLine("Valor: {0}", reader.GetString(3));
+                    Console.WriteLine("Situacao: {0}", reader.GetString(4));
+
+                    p.IdPassagem = reader.GetString(0);
+                    p.IdVoo = reader.GetString(1);
+                }
+            }
+            Console.WriteLine("\nPressione enter para continuar!");
+            Console.ReadKey();
             return p;
         }/// Rodando perfeitamente.
-        public void ImprimirPassagem(List<PassagemVoo> listaPassagem)
+        public void ImprimirPassagem(BancoDados conn, SqlCommand cmd)
         {
             Console.Clear();
 
-            foreach (PassagemVoo p in listaPassagem)
-            {
-
-                Console.WriteLine("\n>>>>>>>  PASSAGEM <<<<<<");
-                Console.WriteLine(p.ToString());
-
-            }
-        }/// funcionando
-         /// 
-         /// Rodando perfeitamente.
-        public void imprimindo_Arquivo()
-        {
-            string line;
-            try
-            {
-                StreamReader sr = new StreamReader("c:\\Users\\Filipe Anjos\\Documents\\ATIVIDADES_ESTAGIO\\PON_THE_FLY\\PassagemVoo.dat");//Instancia um Objeto StreamReader (Classe de Manipulação de Leitura de Arquivos)
-                line = sr.ReadLine(); //Faz a Leitura de uma linha do arquivo e atribui a string line
-                while (line != null)// Laço de Repetição para fazer a leitura de linhas do arquivo até o EOF (End Of File - Fim do Arquivo)
-                {
-                    Console.WriteLine(line);//Imprime o retorno do arquivo no Console
-                    line = sr.ReadLine(); //Faz a Leitura de linha do arquivo e atribui a string line
-                }
-                sr.Close();//Fecha o Arquivo
-                Console.WriteLine("Fim da Leitura do Arquivo");
-                Console.ReadLine();
-            }
-            catch (Exception e) // Tratamento de erro na abertura do arquivo
-            {
-                Console.WriteLine("Exception: " + e.Message);
-            }
-            finally
-            {
-                Console.WriteLine("Executando o Bloco de Comando - Sem Erros");
-            }
-            Console.WriteLine("FIM DA LEITURA");
-            Console.ReadKey();
+            PassagemVoo pvoo = new();
+            pvoo.LocalizarPassagem(conn, cmd);
         }
-        public bool Ler_Arquivo()
-        {
-            string line;
-            try
-            {
-                StreamReader sr = new StreamReader("c:\\Users\\Filipe Anjos\\Documents\\ATIVIDADES_ESTAGIO\\PON_THE_FLY\\PassagemVoo.dat");//Instancia um Objeto StreamReader (Classe de Manipulação de Leitura de Arquivos)
-                line = sr.ReadLine(); //Faz a Leitura de uma linha do arquivo e atribui a string line
-                while (line != null)// Laço de Repetição para fazer a leitura de linhas do arquivo até o EOF (End Of File - Fim do Arquivo)
-                {
-
-                    line = sr.ReadLine(); //Faz a Leitura de linha do arquivo e atribui a string line
-                    return true;
-
-                }
-                sr.Close();//Fecha o Arquivo
-                Console.WriteLine("FIM DA LEITURA");
-                Console.ReadKey();
-            }
-            catch // Tratamento de erro na abertura do arquivo
-            {
-                Console.WriteLine("Arquivo inexistente! - Gerar arquivo");
-                return false;
-            }
-            if (line != null)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        public void GravarArquivoPassagem(List<PassagemVoo> listaPassagem)
-        {
-            bool validacao = true;
-
-            try
-            {
-                StreamWriter sw = new StreamWriter(@"C:\Users\5BY5\source\repos\PROJETO-ON-THE-FLY\POnTheFly\PassagemVoo.dat");  //Instancia um Objeto StreamWriter (Classe de Manipulação de Arquivos)
-                                                                                                //sw.WriteLine("maria;araraquara;190;contato;"); //Exemplo de escrita - formato da escrita será de acordo com a necessidade do projeto
-                foreach (var i in listaPassagem)
-                {
-                    sw.WriteLine(i.getData());
-                }
-                sw.Close();  // Comando para Fechar o Arquivo
-            }
-
-            catch (Exception e)
-            {
-                Console.WriteLine("Exception: " + e.Message);
-                validacao = false;
-            }
-
-            if (validacao)
-            {
-                Console.WriteLine("\nArquivo gravado com sucesso!");
-            }
-        }
-        public void CarregarArquivoPassagem(List<PassagemVoo> listaPassagem)
-        {       
-            try
-            {
-                using (StreamReader sr = new StreamReader(@"C:\Users\5BY5\source\repos\PROJETO-ON-THE-FLY\POnTheFly\PassagemVoo.dat"))
-                {
-                    string line;
-                    while ((line = sr.ReadLine()) != null)
-                    {
-                        //tempo = new DateTime(int.Parse(line.Substring(14, 4)), int.Parse(line.Substring(12, 2)), int.Parse(line.Substring(10, 2)), int.Parse(line.Substring(20, 2)), int.Parse(line.Substring(18, 2)), int.Parse(line.Substring(18, 2)));
-                        listaPassagem.Add(new PassagemVoo
-                            (
-                            line.Substring(0, 6),
-                            line.Substring(6, 5),
-                            new DateTime(int.Parse(line.Substring(15, 4)), int.Parse(line.Substring(13, 2)), int.Parse(line.Substring(11, 2)), int.Parse(line.Substring(19, 2)), int.Parse(line.Substring(21, 2)), int.Parse(line.Substring(21, 2))),
-                            //tempo1 = DateTime.Parse((tempo).ToString("yyyy-MM-dd HH:mm:ss")),
-                            line.Substring(23, 4),
-                            char.Parse(line.Substring(27, 1))
-                            ));
-                    }
-
-                    Console.WriteLine("\nArquivo carregado com sucesso!");
-                }
-
-            }
-
-            catch (Exception e)
-            {
-                Console.WriteLine("\nException: " + e.Message);
-                Console.WriteLine(e.StackTrace);
-            }
-        }
-        public void AcessarPassagem(List<Aeronave> aeronave, List<Voo> listaVoo, List<PassagemVoo> listaPassagem)
+        public void AcessarPassagem(BancoDados conn, SqlCommand cmd)
         {
             int opcao = 0;
             bool condicaoDeParada = false;
             PassagemVoo passagem = new();
+            cmd.Connection = conn.OpenConexao();
 
             do
             {
@@ -372,21 +253,21 @@ namespace POnTheFly
                 switch (opcao)
                 {
                     case 1:
-                        passagem.CadastrarPassagem(aeronave, listaVoo, listaPassagem);
+                        passagem.CadastrarPassagem(conn,cmd);
                         Console.ReadKey();
                         break;
 
                     case 2:
-                        passagem.EditarPassagem(listaVoo, listaPassagem);
+                        passagem.EditarPassagem(conn,cmd);
                         Console.ReadKey();
                         break;
 
                     case 3:
-                        passagem.LocalizarPassagem(listaVoo, listaPassagem);
+                        passagem.LocalizarPassagem(conn,cmd);
                         break;
 
                     case 4:
-                        passagem.ImprimirPassagem(listaPassagem);
+                        passagem.ImprimirPassagem(conn, cmd);
                         Console.ReadKey();
                         break;
                 }

@@ -197,7 +197,7 @@ namespace POnTheFly
                 while (reader.Read())
                 {
                     Console.WriteLine("Voo");
-                    Console.WriteLine("ID_Voo: {0}", reader.GetString(0));
+                    Console.WriteLine("ID_Voo:V{0}", reader.GetString(0));
                     Console.WriteLine("Destino: {0}", reader.GetString(1));
                     Console.WriteLine("Aeronave_Id:  {0}", reader.GetString(2));
                     Console.WriteLine("Data Voo: {0}", reader.GetDateTime(3));

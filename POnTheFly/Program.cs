@@ -22,6 +22,7 @@ namespace POnTheFly
             Aeronave aeronave = new Aeronave();
             Passageiro passageiro = new Passageiro();
             Voo voo = new Voo();
+            PassagemVoo passagem = new PassagemVoo();
 
             cmd.Connection = conn.OpenConexao();
 
@@ -214,46 +215,46 @@ namespace POnTheFly
                     case 4:
                         do
                         {
-                            //Console.Clear();
+                            Console.Clear();
 
-                            //Console.WriteLine("Bem-Vindo ao Aeroporto ON THE FLY\n\n");
+                            Console.WriteLine("Bem-Vindo ao Aeroporto ON THE FLY\n\n");
 
-                            //Console.WriteLine("Selecione a opção desejada: ");
-                            //Console.WriteLine("\n1 - Acessar Passagens");
-                            //Console.WriteLine("9 - Voltar ao menu anterior");
-                            //Console.Write("\nOpção: ");
+                            Console.WriteLine("Selecione a opção desejada: ");
+                            Console.WriteLine("\n1 - Acessar Passagens");
+                            Console.WriteLine("9 - Voltar ao menu anterior");
+                            Console.Write("\nOpção: ");
 
-                            //try
-                            //{
-                            //    opcao = int.Parse(Console.ReadLine());
-                            //    condicaoDeParada = false;
-                            //}
+                            try
+                            {
+                                opcao = int.Parse(Console.ReadLine());
+                                condicaoDeParada = false;
+                            }
 
-                            //catch (Exception)
-                            //{
-                            //    Console.WriteLine("Parametro de entrada inválido!");
-                            //    Console.WriteLine("Pressione enter para escolher novamente!");
-                            //    Console.ReadKey();
-                            //    condicaoDeParada = true;
-                            //}
+                            catch (Exception)
+                            {
+                                Console.WriteLine("Parametro de entrada inválido!");
+                                Console.WriteLine("Pressione enter para escolher novamente!");
+                                Console.ReadKey();
+                                condicaoDeParada = true;
+                            }
 
-                            //if (opcao < 0 || opcao > 3 && opcao != 9)
-                            //{
-                            //    if (!condicaoDeParada)
-                            //    {
-                            //        Console.WriteLine("Escolha uma das opções disponiveis!!");
-                            //        Console.WriteLine("Pressione enter para escolher novamente!");
-                            //        Console.ReadKey();
-                            //        condicaoDeParada = true;
-                            //    }
-                            //}
+                            if (opcao < 0 || opcao > 3 && opcao != 9)
+                            {
+                                if (!condicaoDeParada)
+                                {
+                                    Console.WriteLine("Escolha uma das opções disponiveis!!");
+                                    Console.WriteLine("Pressione enter para escolher novamente!");
+                                    Console.ReadKey();
+                                    condicaoDeParada = true;
+                                }
+                            }
 
-                            //switch (opcao)
-                            //{
-                            //    case 1:
-                            //        passagem.AcessarPassagem(listaAeronaves, listaVoo, listaPassagens);
-                            //        break;
-                            //}
+                            switch (opcao)
+                            {
+                                case 1:
+                                    passagem.AcessarPassagem(conn,cmd);
+                                    break;
+                            }
 
                         } while (opcao != 9);
                         break;
