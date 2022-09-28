@@ -44,7 +44,7 @@ namespace Projeto_OnTheFly
             Console.WriteLine("Informe o id voo desejado: ");
 
             Voo voo = new();
-            voo = voo.LocalizarVoo(listaDeVoo);
+            //voo = voo.LocalizarVoo(listaDeVoo);
             if (voo == null)
             {
                 Console.WriteLine("\nParametro de entrada é inválido!");

@@ -98,19 +98,19 @@ namespace POnTheFly
                         stringValor,
                         'L'
                     ));;
-                aeronave.AcentosOcupado = "" + idPassagem;
+                //aeronave.AcentosOcupado = "" + idPassagem;
                 stringIdPassagem = "" + idPassagem++;
             }
 
-            if (int.Parse(aeronave.Capacidade) == int.Parse(aeronave.AcentosOcupado))
-            {
-                Console.WriteLine("\nCadastro de passagens com sucesso!");
-            }
+            //if (int.Parse(aeronave.Capacidade) == int.Parse(aeronave.AcentosOcupado))
+            //{
+            //    Console.WriteLine("\nCadastro de passagens com sucesso!");
+            //}
 
-            else
-            {
-                Console.WriteLine("Falha ao criar passagens!");
-            }
+            //else
+            //{
+            //    Console.WriteLine("Falha ao criar passagens!");
+            //}
         }/// funcionando
          /// 
          /// Rodando perfeitamente.

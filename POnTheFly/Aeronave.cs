@@ -12,7 +12,6 @@ namespace POnTheFly
         public string Inscricao { get; set; }
         public string Tipo { get; set; }
         public string Capacidade { get; set; }
-        public string AcentosOcupado { get; set; }
         public DateTime UltimaVenda { get; set; }
         public DateTime DataCadastro { get; set; }
         public char Situacao { get; set; }
@@ -25,7 +24,6 @@ namespace POnTheFly
             Inscricao = inscricao;
             Tipo = "Comercial";
             Capacidade = capacidade;
-            AcentosOcupado = acentosOcupado;
             UltimaVenda = ultimaVenda;
             DataCadastro = dataCadastro;
             Situacao = situacao;
@@ -196,6 +194,7 @@ namespace POnTheFly
                     Console.WriteLine("Situacao:  {0}", reader.GetString(4));
                     Console.WriteLine("CNPJ:  {0}", reader.GetString(5));
                     aeronave.Inscricao = reader.GetString(0);
+                    
                 }
             }
             Console.WriteLine("\nPressione enter para continuar!");
@@ -407,11 +406,11 @@ namespace POnTheFly
         }
         public string getData()
         {
-            return $"{Inscricao}{Capacidade.PadRight(3)}{AcentosOcupado.PadRight(3)}{UltimaVenda.ToString("ddMMyyyy")}{DataCadastro.ToString("ddMMyyyy")}{Situacao}";
+            return $"{Inscricao}{Capacidade.PadRight(3)}{UltimaVenda.ToString("ddMMyyyy")}{DataCadastro.ToString("ddMMyyyy")}{Situacao}";
         }
         public override string ToString()
         {
-            return $"Inscrição: {Inscricao}\nCapacidade: {Capacidade} Passageiros\nAcentos Ocupados: {AcentosOcupado}\nData da ultima venda: {UltimaVenda.ToShortDateString()}\nData do Cadastro: {DataCadastro.ToLongDateString()}\nSituação: {Situacao}\n";
+            return $"Inscrição: {Inscricao}\nCapacidade: {Capacidade} Passageiros\nData da ultima venda: {UltimaVenda.ToShortDateString()}\nData do Cadastro: {DataCadastro.ToLongDateString()}\nSituação: {Situacao}\n";
         }
     }
 }

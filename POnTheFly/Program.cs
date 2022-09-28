@@ -21,6 +21,7 @@ namespace POnTheFly
             CompanhiaAerea companhia = new CompanhiaAerea();
             Aeronave aeronave = new Aeronave();
             Passageiro passageiro = new Passageiro();
+            Voo voo = new Voo();
 
             cmd.Connection = conn.OpenConexao();
 
@@ -108,7 +109,7 @@ namespace POnTheFly
                             switch (opcao)
                             {
                                 case 1:
-                                    companhia.AcessarCompanhia(conn,cmd);
+                                    companhia.AcessarCompanhia(conn, cmd);
                                     break;
                             }
 
@@ -161,52 +162,53 @@ namespace POnTheFly
                         } while (opcao != 9);
 
                         break;
+                 
 
                     case 3:
-                        //do
-                        //{
-                        //    Console.Clear();
+                        do
+                        {
+                            Console.Clear();
 
-                        //    Console.WriteLine("Bem-Vindo ao Aeroporto ON THE FLY\n\n");
+                            Console.WriteLine("Bem-Vindo ao Aeroporto ON THE FLY\n\n");
 
-                        //    Console.WriteLine("Selecione a opção desejada: ");
-                        //    Console.WriteLine("\n1 - Acessar Voo");
-                        //    Console.WriteLine("9 - Voltar ao menu anterior");
-                        //    Console.Write("\nOpção: ");
+                            Console.WriteLine("Selecione a opção desejada: ");
+                            Console.WriteLine("\n1 - Acessar Voo");
+                            Console.WriteLine("9 - Voltar ao menu anterior");
+                            Console.Write("\nOpção: ");
 
-                        //    try
-                        //    {
-                        //        opcao = int.Parse(Console.ReadLine());
-                        //        condicaoDeParada = false;
-                        //    }
+                            try
+                            {
+                                opcao = int.Parse(Console.ReadLine());
+                                condicaoDeParada = false;
+                            }
 
-                        //    catch (Exception)
-                        //    {
-                        //        Console.WriteLine("Parametro de entrada inválido!");
-                        //        Console.WriteLine("Pressione enter para escolher novamente!");
-                        //        Console.ReadKey();
-                        //        condicaoDeParada = true;
-                        //    }
+                            catch (Exception)
+                            {
+                                Console.WriteLine("Parametro de entrada inválido!");
+                                Console.WriteLine("Pressione enter para escolher novamente!");
+                                Console.ReadKey();
+                                condicaoDeParada = true;
+                            }
 
-                        //    if (opcao < 0 || opcao > 3 && opcao != 9)
-                        //    {
-                        //        if (!condicaoDeParada)
-                        //        {
-                        //            Console.WriteLine("Escolha uma das opções disponiveis!!");
-                        //            Console.WriteLine("Pressione enter para escolher novamente!");
-                        //            Console.ReadKey();
-                        //            condicaoDeParada = true;
-                        //        }
-                        //    }
+                            if (opcao < 0 || opcao > 3 && opcao != 9)
+                            {
+                                if (!condicaoDeParada)
+                                {
+                                    Console.WriteLine("Escolha uma das opções disponiveis!!");
+                                    Console.WriteLine("Pressione enter para escolher novamente!");
+                                    Console.ReadKey();
+                                    condicaoDeParada = true;
+                                }
+                            }
 
-                        //    switch (opcao)
-                        //    {
-                        //        case 1:
-                        //            voo.AcessarVoo(conn, cmd);
-                        //            break;
-
-
-                        //} while (opcao != 9);
+                            switch (opcao)
+                            {
+                                case 1:
+                                    voo.AcessarVoo(conn, cmd);
+                                    break;
+                            } while (opcao != 9);
+                            
+                        }while(opcao != 9);
                         break;
 
                     case 4:
@@ -265,6 +267,7 @@ namespace POnTheFly
 
                             //Console.WriteLine("Selecione a opção desejada: ");
                             //Console.WriteLine("\n1 - Acessar Vendas");
+                            //Console.WriteLine("9 - Voltar ao menu anterior");
                             //Console.Write("\nOpção: ");
 
                             //try
@@ -294,9 +297,9 @@ namespace POnTheFly
 
                             //switch (opcao)
                             //{
-                                //case 1:
-                                //    venda.AcessarVenda(listaDeVendas, listaDeItemVenda, listaPassagens, listaVoo);
-                                //    break;
+                            //case 1:
+                            //    venda.AcessarVenda(listaDeVendas, listaDeItemVenda, listaPassagens, listaVoo);
+                            //    break;
                             //}
 
                         } while (opcao != 9);

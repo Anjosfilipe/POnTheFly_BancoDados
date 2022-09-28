@@ -11,6 +11,7 @@ namespace POnTheFly
     public class Voo
     {
         public int IDVoo { get; set; }
+        public string AcentosOcupado { get; set; }
         public string Destino { get; set; }
         public string InscricaoAeronave { get; set; }
         public DateTime DataVoo { get; set; }
@@ -32,12 +33,13 @@ namespace POnTheFly
             Situacao = situacao;
         }
 
-        public Voo CadastrarVoo(List<Voo> listaVoo, List<Aeronave> listAeronave, List<string> listIata)
+        public Voo CadastrarVoo(BancoDados conn, SqlCommand cmd)
         {
             Voo voo = new Voo();
             int contador = 0;
             DateTime dataVoo = DateTime.Now;
             bool condicaoDeSaida = false;
+
 
 
 
@@ -51,44 +53,57 @@ namespace POnTheFly
             {
                 Console.Clear();
 
-                contador = listaVoo.Count + 1;
+
                 Console.Write("Informe o destino do voo: ");
                 string destino = Console.ReadLine().ToUpper();
 
                 //// ---- validação da IATA do voo ----- //// 
 
-                bool achei = false;
-                foreach (string d in listIata)
+                cmd = new();
+                cmd.Connection = conn.OpenConexao();
+
+                cmd.CommandText = "SELECT * FROM IATA WHERE IATA = @IATA";
+                cmd.Parameters.Add(new SqlParameter("IATA", destino));
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    if (destino == d)
+                    if (reader.HasRows)
                     {
-                        achei = true;
-                        //Console.WriteLine("\nDestino  Encontrado!\n");                        
-                        // ----- continua o cadastro 
+                        while (reader.Read())
+                        {
+                            contador++;
+                        }
                     }
                 }
-                if (achei == false)
+                if (contador == 0)
                 {
-                    Console.WriteLine("\nInformação não localizada. \nPressione enter para voltar ao menu anterior");
+                    Console.WriteLine("\nIATA informado não está cadastrado em nosso banco de dados!");
+                    Console.WriteLine("Pressione enter apra continuar!");
+
                     return null;
                 }
                 Console.Write("Informe a incrição da aeronave desejada: ");
                 string IdAeronave = Console.ReadLine().ToUpper();
-                achei = false;
-                // ---- validação do ID da aeronave ------ //
 
-                foreach (var aeronave in listAeronave)
+                cmd.CommandText = "SELECT * FROM Aeronave WHERE Inscricao = @Inscricao";
+                cmd.Parameters.Add(new SqlParameter("@Inscricao", IdAeronave));
+               
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    if (aeronave.Inscricao == IdAeronave)
+                    if (reader.HasRows)
                     {
-                        achei = true;
-                        //Console.WriteLine("\nAeronave encontrada!\n");                        
+                        while (reader.Read())
+                        {
+                            contador++;
+                            
+
+                        }
                     }
                 }
-
-                if (achei == false)
+                if (contador == 0)
                 {
-                    Console.WriteLine("\nInformação não localizada. \nPressione enter para voltar ao menu anterior");
+                    Console.WriteLine("\nAERONAVE informado não está cadastrado em nosso banco de dados!");
+                    Console.WriteLine("Pressione enter apra continuar!");
+
                     return null;
                 }
 
@@ -129,13 +144,12 @@ namespace POnTheFly
                     return new Voo(contador, destino, IdAeronave, dataVoo, DateTime.Now, 'A');
                 }
             }
-        }  
-        public Voo LocalizarVoo(List<Voo> listaVoo)
+        }
+        public Voo LocalizarVoo(BancoDados conn, SqlCommand cmd)
         {
             int id = 0;
-            bool achei = false;
+            int contador = 0;
             Voo v = new Voo();
-
 
             Console.Clear();
 
@@ -150,47 +164,74 @@ namespace POnTheFly
                 return null;
             }
 
-            foreach (Voo i in listaVoo)
-            {
-                if (i.IDVoo == id)
-                {
-                    achei = true;
-                    v = i;
-                    Console.WriteLine("\n>>>>>>> VOO LOCALIZADO <<<<<<");
-                    Console.WriteLine(v.ToString());
-                    return v;
 
+            cmd = new();
+            cmd.Connection = conn.OpenConexao();
+
+            cmd.CommandText = "SELECT * FROM  Voo WHERE ID_Voo = @ID_Voo0";
+            cmd.Parameters.Add(new SqlParameter("@ID_Voo0", id));
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        contador++;
+                    }
                 }
             }
-            if (achei)
+            if (contador == 0)
             {
-                Console.WriteLine("Voo não encontrado!");
+                Console.WriteLine("\nCNPJ informado não está cadastrado em nosso banco de dados!");
+                Console.WriteLine("Pressione enter apra continuar!");
+
+                return null;
             }
+
+            cmd.CommandText = "SELECT * FROM  Voo WHERE ID_Voo = @ID_Voo1";
+            cmd.Parameters.Add(new SqlParameter("@ID_Voo1", id));
+
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                Console.Clear();
+                while (reader.Read())
+                {
+                    Console.WriteLine("Voo");
+                    Console.WriteLine("ID_Voo: {0}", reader.GetString(0));
+                    Console.WriteLine("Destino: {0}", reader.GetString(1));
+                    Console.WriteLine("Aeronave_Id:  {0}", reader.GetString(2));
+                    Console.WriteLine("Data Voo: {0}", reader.GetDateTime(3));
+                    Console.WriteLine("Data Cadastro: {0}", reader.GetString(4));
+                    Console.WriteLine("Situação: {0}", reader.GetString(5));
+                    Console.WriteLine("Assentos Ocupados: {0}", reader.GetInt32(6));
+
+                    v.IDVoo = int.Parse(reader.GetString(0));
+                }
+            }
+
+
+            Console.WriteLine("\nPressione enter para continuar!");
+            Console.ReadKey();
+
 
             return v;
         }
-        public void ImprimirVoo(List<Voo> listaVoo)
+        public void ImprimirVoo(BancoDados conn, SqlCommand cmd)
         {
             Console.Clear();
 
-            Console.WriteLine(">>>>>>>  LISTA DE VOO CADASTRADOS <<<<<<");
-
-            foreach (Voo voo in listaVoo)
-            {
-
-
-                Console.WriteLine(voo.ToString());
-
-            }
+            Voo voo = new();
+            voo.LocalizarVoo(conn, cmd);
         }
-        public void EditarVoo(List<Voo> listaVoo)
+        public void EditarVoo(BancoDados conn, SqlCommand cmd)
         {
             Voo v = new Voo();
+            Voo test = new();
             int op = 0;
 
             Console.Clear();
 
-            v = LocalizarVoo(listaVoo);
+            v = test.LocalizarVoo(conn, cmd);
 
             Console.WriteLine("Escolha a opção desejada");
             Console.WriteLine("\n1 - Editar Destino");
@@ -206,6 +247,13 @@ namespace POnTheFly
                 Console.WriteLine("\nInforme o id do novo destino:");
                 string destino = Console.ReadLine().ToUpper();
                 v.Destino = destino;
+
+                cmd.CommandText = "UPDATE  Voo SET Destino = @destino WHERE ID_Voo = @id";
+
+                cmd.Parameters.Add(new SqlParameter("@id", v.IDVoo));
+                cmd.Parameters.Add(new SqlParameter("@destino", v.Destino));
+
+                cmd.ExecuteNonQuery();
                 Console.WriteLine("\nAlterado com sucesso!");
             }
 
@@ -214,6 +262,13 @@ namespace POnTheFly
                 Console.WriteLine("\nInforme a inscrição da nova Aeronave:");
                 string aeronave = Console.ReadLine().ToUpper();
                 v.InscricaoAeronave = aeronave;
+
+                cmd.CommandText = "UPDATE  Voo SET Aeronave_Id = @aeronaveid WHERE ID_Voo = @id";
+
+                cmd.Parameters.Add(new SqlParameter("@id", v.IDVoo));
+                cmd.Parameters.Add(new SqlParameter("@aeronaveid", v.InscricaoAeronave));
+
+                cmd.ExecuteNonQuery();
                 Console.WriteLine("\nAlterado com sucesso!");
             }
 
@@ -222,6 +277,13 @@ namespace POnTheFly
                 Console.WriteLine("\nInforme a nova data do voo:");
                 DateTime data = DateTime.Parse(Console.ReadLine());
                 v.DataVoo = data;
+
+                cmd.CommandText = "UPDATE  Voo SET DataVoo = @datavoo WHERE ID_Voo = @id";
+
+                cmd.Parameters.Add(new SqlParameter("@id", v.IDVoo));
+                cmd.Parameters.Add(new SqlParameter("@datavoo", v.DataVoo));
+
+                cmd.ExecuteNonQuery();
                 Console.WriteLine("\nAlterado com sucesso!");
             }
 
@@ -232,6 +294,13 @@ namespace POnTheFly
                     Console.WriteLine("\nInforme o situação:");
                     char situacao = char.Parse(Console.ReadLine().ToUpper());
                     v.Situacao = situacao;
+
+                    cmd.CommandText = "UPDATE  Voo SET Situacao = @Situacao WHERE ID_Voo = @id";
+
+                    cmd.Parameters.Add(new SqlParameter("@id", v.IDVoo));
+                    cmd.Parameters.Add(new SqlParameter("@Situacao", v.Situacao));
+
+                    cmd.ExecuteNonQuery();
                     Console.WriteLine("\nAlterado com sucesso!");
                 }
             }
@@ -242,6 +311,8 @@ namespace POnTheFly
             int opcao = 0;
             bool condicaoDeParada = false;
             Voo voo = new();
+           
+
             cmd.Connection = conn.OpenConexao();
 
             do
@@ -282,43 +353,49 @@ namespace POnTheFly
                     }
                 }
 
-                //switch (opcao)
-                //{
-                //    case 1:
-                //        Voo voo1 = new Voo();
-                //        voo1 = voo.CadastrarVoo(listaVoo, listaAeronaves, listIata);
+                switch (opcao)
+                {
+                    case 1:
+                        Voo voo1 = new Voo();
+                        voo1 = voo.CadastrarVoo(conn, cmd);
 
-                //        if (voo1 == null)
-                //        {
-                //        }
+                        cmd.Connection = conn.OpenConexao();
+                        if (voo1 == null)
+                        {
+                        }
 
-                //        else
-                //        {
-                //            listaVoo.Add(voo1);
-                //        }
-                //        Console.ReadKey();
-                //        break;
+                        else
+                        {
+                            cmd.CommandText = $"Insert into Voo (ID_Voo, Destino, Aeronave_Id, DataVoo, DataCadastro, Situacao, AssentosOcupados) Values ('{voo1.IDVoo}', " +
+                        $"'{voo1.Destino}', '{voo1.InscricaoAeronave}', '{voo1.DataVoo}', '{voo1.DataCadastro.ToShortDateString()}', '{voo1.Situacao}', '{0}');";
 
-                //    case 2:
-                //        voo.EditarVoo(listaVoo);
-                //        Console.ReadKey();
-                //        break;
+                            cmd.ExecuteNonQuery();
+                            Console.WriteLine("\t\t\t\t>>>>>>>> CADASTRO REALIZADO COM SUCESSO! <<<<<<<<<<<<");
+                            Console.ReadKey();
+                        }
 
-                //    case 3:
-                //        voo.LocalizarVoo(listaVoo);
-                //        Console.ReadKey();
-                //        break;
+                        break;
 
-                //    case 4:
-                //        voo.ImprimirVoo(listaVoo);
-                //        Console.ReadKey();
-                //        break;
+                    case 2:
+                        voo.EditarVoo(conn, cmd);
+                        Console.ReadKey();
+                        break;
 
-                //    case 9:
-                //        cmd.Connection = conn.CloseConexao();
-                //        Console.WriteLine("Até");
-                //        break;
-                //}
+                    case 3:
+                        voo.LocalizarVoo(conn, cmd);
+                        Console.ReadKey();
+                        break;
+
+                    case 4:
+                        voo.ImprimirVoo(conn, cmd);
+                        Console.ReadKey();
+                        break;
+
+                    case 9:
+                        cmd.Connection = conn.CloseConexao();
+                        Console.WriteLine("Até");
+                        break;
+                }
 
             } while (opcao != 9);
         }
