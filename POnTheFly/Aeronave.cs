@@ -198,6 +198,7 @@ namespace POnTheFly
                 }
             }
             Console.WriteLine("\nPressione enter para continuar!");
+            
             Console.ReadKey();
             return aeronave;
         }
@@ -302,7 +303,6 @@ namespace POnTheFly
             }
 
         }
-
         public void AcessarAeronave(BancoDados conn, SqlCommand cmd)
         {
             int opcao = -1;

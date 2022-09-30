@@ -206,6 +206,7 @@ namespace POnTheFly
                     Console.WriteLine("Assentos Ocupados: {0}", reader.GetInt32(6));
 
                     v.IDVoo = int.Parse(reader.GetString(0));
+                    v.InscricaoAeronave = reader.GetString(1);
                 }
             }
 

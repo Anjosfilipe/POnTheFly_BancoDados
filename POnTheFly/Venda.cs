@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using POnTheFly;
+using System.Data.SqlClient;
 
 namespace Projeto_OnTheFly
 {
@@ -16,180 +17,153 @@ namespace Projeto_OnTheFly
         public double ValorTotal { get; set; }
         //Metodos
         public Venda() { }
-        public Venda(int id, DateTime dataVenda, string passageiro, double valorTotal)
+        public Venda(DateTime dataVenda, string passageiro, double valorTotal)
         {
-            Id = id;
+
             DataVenda = dataVenda;
             Passageiro = passageiro;
             ValorTotal = valorTotal;
         }
-        public Venda CadastrarVenda(List<Venda> listaDeVendas, List<ItemVenda> listaDeItemVenda, List<PassagemVoo> listaDePassagemVoo, List<Voo> listaDeVoo)
+        public Venda CadastrarVenda(BancoDados conn, SqlCommand cmd)
         {
-
-            double valorUnitarioPassagem = 1000;
-            int tamanhoListaDeVendas = listaDeVendas.Count;
+            PassagemVoo pass = new();
+            PassagemVoo pv = pass.LocalizarPassagem(conn, cmd);
+            double valorUnitarioPassagem = double.Parse(pv.Valor);
             int qtdPassagensVenda = 0;
             string cpf;
 
             Console.Clear();
 
-            cpf = Program.ReadCPF("Digite o CPF do portador sem pontos ou traço: ");
+            Console.WriteLine("Digite o CPF do portador sem pontos ou traço: ");
+            cpf = Console.ReadLine();
 
             do
             {
-                qtdPassagensVenda = Program.ReadInt("Digite a quantidade de passagens que deseja comprar" +
-                    " (maximo 4 por venda): ");
+                Console.Write("Digite a quantidade de passagens que deseja comprar" +" (maximo 4 por venda): ");
+                qtdPassagensVenda = int.Parse(Console.ReadLine());
                 if (qtdPassagensVenda < 1 || qtdPassagensVenda > 4) Console.WriteLine("Quantidade invalida!");
             } while (qtdPassagensVenda < 1 || qtdPassagensVenda > 4);
             Console.WriteLine("Informe o id voo desejado: ");
 
             Voo voo = new();
-            //voo = voo.LocalizarVoo(listaDeVoo);
-            if (voo == null)
-            {
-                Console.WriteLine("\nParametro de entrada é inválido!");
-                Console.ReadKey();
-                return null;
-            }
+            Voo voo1 = voo.LocalizarVoo(conn, cmd);
+            Aeronave aeronave = new();
+            Aeronave ar = aeronave.Localizar(conn, cmd);
 
-            int qtdPassagemLivre = 0;
-            bool b = false;
-            string aux = "V" + voo.IDVoo.ToString().PadRight(4);
-
-            foreach (PassagemVoo passagem in listaDePassagemVoo)
-            {
-                b = aux == passagem.IdVoo;
-                if (b && passagem.Situacao == 'L') qtdPassagemLivre++;
-            }
-            if (qtdPassagemLivre < qtdPassagensVenda)
+            int passagemlivre = int.Parse(ar.Capacidade);
+            
+            if (passagemlivre < qtdPassagensVenda)
             {
                 Console.WriteLine("A quantidade de passagem livres é menor do que a quantidade a ser vendida! Venda nao realizada");
                 return null;
             }
-            int contadorAuxiliar = qtdPassagensVenda;
-            foreach (PassagemVoo passagem in listaDePassagemVoo)
-            {
-                if (passagem.Situacao == 'L' && contadorAuxiliar !=0)
-                {
-                    passagem.Situacao = 'P';
-                    contadorAuxiliar--;
-                }
-            }
 
-            //Trocar o status da passagem para Paga
+            do
+            {
+                cmd = new();
+                cmd.Connection = conn.OpenConexao();
+                cmd.CommandText = "UPDATE  PassagemVoo SET Situacao = 'P',DataUltima_Operacao = @DataUltima_Operacao WHERE Situacao = 'L' AND ID_Voo = @ID_Voo1 AND ID_PassagemVoo = @idpassagem";
+
+                cmd.Parameters.Add(new SqlParameter("@DataUltima_Operacao", DateTime.Now.ToShortDateString()));
+                cmd.Parameters.Add(new SqlParameter("@ID_Voo1", voo1.IDVoo));
+                cmd.Parameters.Add(new SqlParameter("@idpassagem", passagemlivre));
+                cmd.ExecuteNonQuery();
+                qtdPassagensVenda--;
+                passagemlivre--;
+            }while (qtdPassagensVenda != 0);
+
 
 
             Venda venda = new Venda
             (
-                tamanhoListaDeVendas + 1,
-                DateTime.Today,
+                DateTime.Now,
                 cpf,
                 qtdPassagensVenda * valorUnitarioPassagem
             );
 
-            for (int i = 0; i < qtdPassagensVenda; i++)
-            {
-                ItemVenda itemVenda = new ItemVenda(venda.Id, 5555, valorUnitarioPassagem);
-                listaDeItemVenda.Add(itemVenda);
-            }
+
+
             return venda;
 
         }
-        public static void ImprimirVendas(List<Venda> listaDeVendas)
+        public static void ImprimirVendas(BancoDados conn, SqlCommand cmd)
         {
-            string op = "-1";
-            string msg = "";
-            string[] options = new string[] { "1", "2", "3", "4", "0" };
-            int i = 0;
+            Console.Clear();
 
-            while (op != "0")
+            Venda vz = new();
+            vz.LocalizarVenda(conn, cmd);
+
+        }
+        public Venda LocalizarVenda(BancoDados conn, SqlCommand cmd)
+        {
+            int contador = 0;
+
+            Venda p = new();
+
+            Console.Clear();
+
+            Console.Write("Informe o CPF do Consumidor: ");
+            string cpf = Console.ReadLine();
+
+            Console.Write("Informe o id da venda: ");
+            string idvenda = Console.ReadLine();
+
+            cmd = new();
+            cmd.Connection = conn.OpenConexao();
+
+            cmd.CommandText = "SELECT * FROM Venda WHERE CPF = @CPF AND ID_Venda = @Idvenda";
+            cmd.Parameters.Add(new SqlParameter("@CPF", cpf));
+            cmd.Parameters.Add(new SqlParameter("@Idvenda", idvenda));
+            using (SqlDataReader reader = cmd.ExecuteReader())
             {
-                Console.Clear();
-                Console.WriteLine("*********REGISTROS DE VENDA*********");
-                Console.WriteLine(listaDeVendas[i]);
-                Console.WriteLine("\n>>> Qtde total de registros: {0}    /    Registro atual: {1}", listaDeVendas.Count, i + 1);
-                Console.WriteLine("\nInforme a operacao desejada: ");
-                Console.WriteLine("1. Ir para o inicio da lista");
-                Console.WriteLine("2. Voltar para o registro anterior");
-                Console.WriteLine("3. Avancar para o proximo registro");
-                Console.WriteLine("4. Ir para o ultimo registro");
-                Console.WriteLine("0. Voltar");
-                Console.Write("\n{0}{1}{2}", msg == "" ? "" : ">>> ", msg, msg == "" ? "" : "\n");
-                op = Program.ReadString("Opcao: ");
-                if (!Program.BuscarNoArray(op, options))
+                if (reader.HasRows)
                 {
-                    msg = "Opcao invalida! Digite novamente...";
-                    continue;
-                }
-                switch (op)
-                {
-                    case "1":
-                        i = 0;
-                        break;
-                    case "2":
-                        if (i != 0) i--;
-                        break;
-                    case "3":
-                        if (i < listaDeVendas.Count - 1) i++;
-                        break;
-                    case "4":
-                        i = listaDeVendas.Count - 1;
-                        break;
-                    case "0":
-                        return;
+                    while (reader.Read())
+                    {
+                        contador++;
+                    }
                 }
             }
-        }
-        public static void LocalizarVenda(List<Venda> listaDeVendas)
-        {
-            string op = "-1";
-            string msg = "";
-            int inputId;
-            string[] options = new string[] { "1", "0" };
-            bool b;
+            if (contador == 0)
+            {
+                Console.WriteLine("\nPassagem informada não está cadastrada em nosso banco de dados!");
+                Console.WriteLine("Pressione enter apra continuar!");
 
-            while (op != "0")
+                return null;
+            }
+
+
+
+            cmd.CommandText = "SELECT * FROM Venda WHERE CPF = @CPF1 AND ID_Venda = @Idvenda1";
+            cmd.Parameters.Add(new SqlParameter("@CPF1", cpf));
+            cmd.Parameters.Add(new SqlParameter("@Idvenda1", idvenda));
+
+            using (SqlDataReader reader = cmd.ExecuteReader())
             {
                 Console.Clear();
-                Console.WriteLine("*********LOCALIZAR VENDA*********");
-                Console.WriteLine("\nInforme a operacao desejada: ");
-                Console.WriteLine("1. Localizar nova venda");
-                Console.WriteLine("0. Voltar");
-                Console.Write("\n{0}{1}{2}", msg == "" ? "" : ">>> ", msg, msg == "" ? "" : "\n");
-                op = Program.ReadString("Opcao: ");
-                if (!Program.BuscarNoArray(op, options))
+                while (reader.Read())
                 {
-                    msg = "Opcao invalida! Digite novamente...";
-                    continue;
-                }
-                switch (op)
-                {
-                    case "1":
-                        b = false;
-                        inputId = Program.ReadInt("Digite o ID da Venda (apenas numeros): V");
+                    Console.WriteLine("Venda");
+                    Console.WriteLine("ID_Venda: {0}", reader.GetInt32(0));
+                    Console.WriteLine("Data Venda: {0}", reader.GetString(1));
+                    Console.WriteLine("CPF:  {0}", reader.GetString(2));
+                    Console.WriteLine("Valor total: {0}", reader.GetString(3));
 
-                        foreach (Venda venda in listaDeVendas)
-                        {
-                            if (venda.Id == inputId)
-                            {
-                                Console.WriteLine("");
-                                Console.WriteLine(venda);
-                                Program.ReadString("\nDigite qualquer tecla para continuar...");
-                                b = true;
-                            };
-                        }
-                        if (!b) Program.ReadString("\nVenda nao encontrada!\nDigite qualquer tecla para continuar...");
-                        break;
-                    case "0":
-                        return;
+
+                    p.Id = reader.GetInt32(0);
+                    p.Passageiro = reader.GetString(2);
                 }
             }
+            Console.WriteLine("\nPressione enter para continuar!");
+            Console.ReadKey();
+            return p;
         }
-        public void AcessarVenda(List<Venda> listaDeVendas, List<ItemVenda> listaDeItemVenda, List<PassagemVoo> listaDePassagemVoo, List<Voo> listaDeVoo)
+        public void AcessarVenda(BancoDados conn, SqlCommand cmd)
         {
             int opcao = 0;
             bool condicaoDeParada = false;
             Venda venda = new();
+            cmd.Connection = conn.OpenConexao();
 
             do
             {
@@ -231,18 +205,24 @@ namespace Projeto_OnTheFly
                 switch (opcao)
                 {
                     case 1:
-                        listaDeVendas.Add(venda.CadastrarVenda(listaDeVendas, listaDeItemVenda, listaDePassagemVoo, listaDeVoo));
+                        Venda venda1 = new();
+                        Venda v = venda1.CadastrarVenda(conn, cmd);
+                        Console.ReadKey();
+                        cmd.Connection = conn.OpenConexao();
+
+                        cmd.CommandText = $"Insert into Venda (DataVenda, CPF,ValorTotal) Values ('{v.DataVenda.ToShortDateString()}', " +
+                        $"'{v.Passageiro}', '{v.ValorTotal}');";
+
+                        cmd.ExecuteNonQuery();
+                        Console.WriteLine("\t\t\t\t>>>>>>>> CADASTRO REALIZADO COM SUCESSO! <<<<<<<<<<<<");
                         Console.ReadKey();
                         break;
-
                     case 2:
-                        if (listaDeVendas.Count != 0) Venda.LocalizarVenda(listaDeVendas);
-                        Console.ReadKey();
+                        venda.LocalizarVenda(conn, cmd);
                         break;
 
                     case 3:
-                        if (listaDeVendas.Count != 0) Venda.ImprimirVendas(listaDeVendas);
-                        Console.ReadKey();
+                        Venda.ImprimirVendas(conn, cmd);
                         break;
 
                     case 9:

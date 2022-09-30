@@ -44,9 +44,7 @@ namespace POnTheFly
 
             Aeronave aeronave = ar.Localizar(conn,cmd);
             Voo voo2 = voo.LocalizarVoo(conn,cmd);
-
-            
-
+         
             do
             {
                 Console.Write("Digite o valor das passagens deste voo: R$ ");
@@ -192,6 +190,7 @@ namespace POnTheFly
 
                     p.IdPassagem = reader.GetString(0);
                     p.IdVoo = reader.GetString(1);
+                    p.Valor = reader.GetString(3);
                 }
             }
             Console.WriteLine("\nPressione enter para continuar!");
