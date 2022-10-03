@@ -355,148 +355,154 @@ namespace POnTheFly
                         break;
 
                     case 7:
-
-                        //Console.Clear();
-
-                        //do
-                        //{
-                        //    Console.WriteLine("                                        <<<<Bem-Vindo(a) a lista de bloqueados e restritos!>>>>                   ");
-                        //    Console.WriteLine("\nQual das listas deseja acessar: \n1-CPFs restritos.\n2-CNPJs restritos.\n0-SAIR!\nOpções: ");
-                        //    opcao = int.Parse(Console.ReadLine());
+                        Console.Clear();
+                        
+                            Console.WriteLine("                                        <<<<Bem-Vindo(a) a lista de bloqueados e restritos!>>>>                   ");
+                            Console.WriteLine("\nQual das listas deseja acessar: \n1-CPFs restritos.\n2-CNPJs restritos.\n0-SAIR!\nOpções: ");
+                            opcao = int.Parse(Console.ReadLine());
 
 
-                        //    if (opcao == 1)
-                        //    {
-                        //        do
-                        //        {
-                        //            Console.WriteLine("                                     <<<<<Bem-vindo(a) ao menu de CPFs restritos:>>>>>                        ");
-                        //            Console.WriteLine("\nQual destas ações deseja fazer? : \n1-Imprimir lista de restritos.\n2-Localizar um CPF.\n3-Remover CPF.\n4-Cadastrar um CPF.\n0-SAIR!\nOpção: ");
-                        //            opcao = int.Parse(Console.ReadLine());
+                            if (opcao == 1)
+                            {
+                                do
+                                {
+                                    Console.WriteLine("                                     <<<<<Bem-vindo(a) ao menu de CPFs restritos:>>>>>                        ");
+                                    Console.WriteLine("\nQual destas ações deseja fazer? : \n1-Imprimir lista de restritos.\n2-Localizar um CPF.\n3-Remover CPF.\n4-Cadastrar um CPF.\n0-SAIR!\nOpção: ");
+                                    opcao = int.Parse(Console.ReadLine());
 
-                        //            if (opcao == 1)
-                        //            {
-                        //                minhalista.Print();
+                                    if (opcao == 1)
+                                    {
 
-                        //            }
-                        //            if (opcao == 2)
-                        //            {
-                        //                Console.Clear();
+                                        cmd = new();
+                                        cmd.Connection = conn.OpenConexao();
 
-                        //                Console.Write("\nInforme o CPF que deseja localizar: ");
-                        //                CPF = Console.ReadLine();
-                        //                minhalista.Find(CPF);
+                                        cmd.CommandText = "SELECT * FROM Restritos  WHERE CPF = @cpf";
 
-                        //            }
-                        //            if (opcao == 3)
-                        //            {
-                        //                Console.Write("\nInforme o CPF que deseja remover: ");
-                        //                string cpfremovido = Console.ReadLine();
-                        //                minhalista.pop(cpfremovido);
+                                    }
+                                    if (opcao == 2)
+                                    {
+                                        Console.Clear();
 
-                        //                Console.Clear();
+                                        Console.Write("\nInforme o CPF que deseja localizar: ");
+                                        string CPF = Console.ReadLine();
+                                        cmd = new();
+                                        cmd.Connection = conn.OpenConexao();
 
-                        //                minhalista.Print();
-                        //            }
-                        //            if (opcao == 4)
-                        //            {
-
-                        //                CPF = ArquivoRestritos.ReadCPF("Informe o cpf sem traço ou ponto: : ");
-
-                        //                minhalista.Push(new ArquivoRestritos(CPF));
-                        //                opcao = -1;
-
-                        //                Console.WriteLine("CPF cadastrado com sucesso!");
-
-                        //            }
-                        //            else if (opcao == 0)
-                        //            {
-                        //                Console.Clear();
-                        //                Console.WriteLine("Finalizando...");
-                        //                return;
-                        //            }
-                        //            else
-                        //                Console.WriteLine("Opção inexistente!");
-
-                        //        } while (true);
+                                        cmd.CommandText = "SELECT * FROM Restritos  WHERE CPF = @cpf";
+                                        cmd.Parameters.Add(new SqlParameter("@cpf", CPF));
 
 
-                        //    }
-                        //    if (opcao == 2)
-                        //    {
-                        //        do
-                        //        {
-                        //            Console.WriteLine("                                     <<<<<Bem-vindo(a) ao menu de CNPJs restritos:>>>>>                        ");
-                        //            Console.WriteLine("\nQual destas ações deseja fazer? : \n1-Imprimir lista de restritos.\n2-Localizar um CNPJ.\n3-Remover CNPJ.\n4-Cadastrar um CNPJ.\n0-SAIR!\nOpção: ");
-                        //            opcao = int.Parse(Console.ReadLine());
-                        //        } while (opcao < 1 || opcao > 4);
+                                    }
+                                    if (opcao == 3)
+                                    {
+                                        Console.Write("\nInforme o CPF que deseja localizar: ");
+                                        string CPF = Console.ReadLine();
+                                        cmd = new();
+                                        cmd.Connection = conn.OpenConexao();
 
-                        //        if (opcao == 1)
-                        //        {
-                        //            minhalista1.Print();
+                                        cmd.CommandText = "DELETE FROM Restritos  WHERE CPF = @cpf";
+                                        cmd.Parameters.Add(new SqlParameter("@cpf", CPF));
+                                    }
+                                    if (opcao == 4)
+                                    {
 
-                        //        }
-                        //        if (opcao == 2)
-                        //        {
-                        //            Console.Clear();
+                                        Console.Write("\nInforme o CPF que deseja localizar: ");
+                                        string CPF = Console.ReadLine();
+                                        cmd = new();
+                                        cmd.Connection = conn.OpenConexao();
 
-                        //            Console.Write("\nInforme o CNPJ que deseja localizar: ");
-                        //            CNPJ = Console.ReadLine();
-                        //            minhalista1.Find(CNPJ);
+                                        cmd.CommandText = "INSERT INTO Restritos (CPF) values(@cpf)";
+                                        cmd.Parameters.Add(new SqlParameter("@cpf", CPF));
 
-                        //        }
-                        //        if (opcao == 3)
-                        //        {
-                        //            Console.Write("\nInforme o CNPJ que deseja remover: ");
-                        //            string cnpjremovido = Console.ReadLine();
-                        //            minhalista1.pop(cnpjremovido);
+                                    }
+                                    else if (opcao == 0)
+                                    {
+                                        Console.Clear();
+                                        Console.WriteLine("Finalizando...");
 
-                        //            Console.Clear();
+                                    }
+                                    else
+                                        Console.WriteLine("Opção inexistente!");
+
+                                } while (true);
 
 
-                        //        }
-                        //        if (opcao == 4)
-                        //        {
-                        //            do
-                        //            {
-                        //                Console.WriteLine("Informe o CNPJ para o cadastro (XX. XXX. XXX/0001-XX): ");
-                        //                CNPJ = Console.ReadLine();
+                            }
+                            if (opcao == 2)
+                            {
+                                do
+                                {
+                                    Console.WriteLine("                                     <<<<<Bem-vindo(a) ao menu de CNPJs restritos:>>>>>                        ");
+                                    Console.WriteLine("\nQual destas ações deseja fazer? : \n1-Imprimir lista de restritos.\n2-Localizar um CNPJ.\n3-Remover CNPJ.\n4-Cadastrar um CNPJ.\n0-SAIR!\nOpção: ");
+                                    opcao = int.Parse(Console.ReadLine());
+                                } while (opcao < 1 || opcao > 4);
 
-                        //                if (!arquivodeBloqueados.ValidarCnpj(CNPJ))
-                        //                {
-                        //                    Console.WriteLine("CPNJ digitado é invalido!");
-                        //                }
+                                if (opcao == 1)
+                                {
+                                    do
+                                    {
+                                        Console.WriteLine("                                     <<<<<Bem-vindo(a) ao menu de CPFs restritos:>>>>>                        ");
+                                        Console.WriteLine("\nQual destas ações deseja fazer? : \n1-Imprimir lista de restritos.\n2-Localizar um CPF.\n3-Remover CPF.\n4-Cadastrar um CPF.\n0-SAIR!\nOpção: ");
+                                        opcao = int.Parse(Console.ReadLine());
 
-                        //            } while (!arquivodeBloqueados.ValidarCnpj(CNPJ));
+                                        if (opcao == 1)
+                                        {
 
-                        //            minhalista1.Push(new ArquivoBloqueados(CNPJ));
-                        //            opcao = -1;
+                                            cmd = new();
+                                            cmd.Connection = conn.OpenConexao();
 
-                        //            Console.WriteLine("CNPJ cadastrado com sucesso!");
-                        //        }
+                                            cmd.CommandText = "SELECT * FROM Bloqueados  WHERE CNPJ = @cnpj";
 
-                        //        else if (opcao == 0)
-                        //        {
-                        //            Console.Clear();
-                        //            Console.WriteLine("Finalizando...");
-                        //            return;
-                        //        }
+                                        }
+                                        if (opcao == 2)
+                                        {
+                                            Console.Clear();
 
-                        //        else
-                        //            Console.WriteLine("Opção inexistente!");
-                        //    }
-                        //    else if (opcao == 0)
-                        //    {
-                        //        Console.Clear();
-                        //        Console.WriteLine("Finalizando...");
-                        //        return;
-                        //    }
-                        //    else
-                        //        Console.WriteLine("Opção inexistente!");
+                                            Console.Write("\nInforme o CNPJ que deseja localizar: ");
+                                            string CNPJ = Console.ReadLine();
+                                            cmd = new();
+                                            cmd.Connection = conn.OpenConexao();
 
-                        //} while (true);
+                                            cmd.CommandText = "SELECT * FROM Bloqueados  WHERE CNPJ = @cnpj";
+                                            cmd.Parameters.Add(new SqlParameter("@cnpj", CNPJ));
 
-                        //break;
 
+                                        }
+                                        if (opcao == 3)
+                                        {
+                                            Console.Write("\nInforme o CNPJ que deseja localizar: ");
+                                            string CNPJ = Console.ReadLine();
+                                            cmd = new();
+                                            cmd.Connection = conn.OpenConexao();
+
+                                            cmd.CommandText = "DELETE FROM Bloqueados WHERE CNPJ = @cnpj";
+                                            cmd.Parameters.Add(new SqlParameter("@cnpj ", CNPJ));
+                                        }
+                                        if (opcao == 4)
+                                        {
+
+                                            Console.Write("\nInforme o CPF que deseja localizar: ");
+                                            string CNPJ = Console.ReadLine();
+                                            cmd = new();
+                                            cmd.Connection = conn.OpenConexao();
+
+                                            cmd.CommandText = "INSERT INTO Bloqueados (CNPJ) values(@cpnj)";
+                                            cmd.Parameters.Add(new SqlParameter("@cpf", CNPJ));
+
+                                        }
+                                        else if (opcao == 0)
+                                        {
+                                            Console.Clear();
+                                            Console.WriteLine("Finalizando...");
+
+                                        }
+                                        else
+                                            Console.WriteLine("Opção inexistente!");
+
+                                    } while (true);
+                                }
+                            }
+                         break;
                     case 0:
                         cmd.Connection = conn.CloseConexao();
                         Console.WriteLine("\nAté mais.");
@@ -505,24 +511,5 @@ namespace POnTheFly
             } while (opcao != 0);
         }
 
-        internal static int ReadInt(string v)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal static string ReadCPF(string v)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal static bool BuscarNoArray(string op, string[] options)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal static string ReadString(string v)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
